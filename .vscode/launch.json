@@ -1,0 +1,16 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run Flag Marshal extension",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}/artifacts/vscode",
+        "${workspaceFolder}/fixtures/ts-launchdarkly"
+      ],
+      "outFiles": ["${workspaceFolder}/artifacts/vscode/dist/**/*.cjs"],
+      "preLaunchTask": "npm: extension:dev"
+    }
+  ]
+}

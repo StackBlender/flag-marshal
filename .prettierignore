@@ -1,0 +1,14 @@
+dist/
+coverage/
+artifacts/
+.vscode-test/
+node_modules/
+package-lock.json
+*.tsbuildinfo
+
+# Documentation is hand-wrapped prose. Prettier's markdown rules fight the
+# wrapping and rewrite emphasis markers, producing large diffs with no gain.
+*.md
+fixtures/
+schema/
+catalog/

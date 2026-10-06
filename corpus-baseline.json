@@ -1,0 +1,74 @@
+{
+  "java-sdk-contrib": {
+    "flags": 36,
+    "unresolved": 2,
+    "providers": ["openfeature"],
+    "unsupported": ["ConfigCat", "Flagsmith", "Flipt", "Optimizely", "Statsig"]
+  },
+  "java-server-sdk": {
+    "flags": 9,
+    "unresolved": 33,
+    "providers": ["launchdarkly"],
+    "unsupported": []
+  },
+  "js-sdk-contrib": {
+    "flags": 38,
+    "unresolved": 82,
+    "providers": ["openfeature"],
+    "unsupported": ["Flagsmith", "Flipt", "GrowthBook"]
+  },
+  "node-server-sdk": {
+    "flags": 3,
+    "unresolved": 2,
+    "providers": ["launchdarkly"],
+    "unsupported": []
+  },
+  "spring-boot": {
+    "flags": 78,
+    "unresolved": 5,
+    "providers": ["spring-conditional"],
+    "unsupported": []
+  },
+  "spring-petclinic": {
+    "flags": 0,
+    "unresolved": 0,
+    "providers": [],
+    "unsupported": []
+  },
+  "togglz": {
+    "flags": 32,
+    "unresolved": 0,
+    "providers": ["properties", "spring-conditional", "togglz"],
+    "unsupported": []
+  },
+  "togglz-samples": {
+    "flags": 2,
+    "unresolved": 0,
+    "providers": ["properties", "togglz"],
+    "unsupported": []
+  },
+  "unleash": {
+    "flags": 0,
+    "unresolved": 3,
+    "providers": [],
+    "unsupported": []
+  },
+  "unleash-client-java-examples": {
+    "flags": 2,
+    "unresolved": 0,
+    "providers": ["unleash"],
+    "unsupported": []
+  },
+  "unleash-java-sdk": {
+    "flags": 14,
+    "unresolved": 4,
+    "providers": ["unleash"],
+    "unsupported": []
+  },
+  "unleash-node-sdk": {
+    "flags": 20,
+    "unresolved": 6,
+    "providers": ["unleash"],
+    "unsupported": []
+  }
+}

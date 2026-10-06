@@ -1,0 +1,8 @@
+togglz:
+  features:
+    NEW_CHECKOUT:
+      enabled: true
+    LEGACY_EXPORT:
+      enabled: false
+    RETIRED_BANNER:
+      enabled: false

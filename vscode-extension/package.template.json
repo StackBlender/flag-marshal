@@ -1,0 +1,59 @@
+{
+  "name": "flag-marshal",
+  "displayName": "Flag Marshal",
+  "description": "Local-first feature-flag technical-debt analysis. Finds stale, orphaned, and expired flags in your workspace.",
+  "publisher": "stackblender",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": ["Linters", "Other"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./dist/frontends/vscode/extension.cjs",
+  "contributes": {
+    "commands": [
+      {
+        "command": "flagMarshal.scan",
+        "title": "Flag Marshal: Scan workspace for feature flags",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "flagMarshal.reveal",
+        "title": "Flag Marshal: Go to flag reference"
+      },
+      {
+        "command": "flagMarshal.toggleSort",
+        "title": "Flag Marshal: Sort flags by debt or by name",
+        "icon": "$(list-ordered)"
+      }
+    ],
+    "views": {
+      "explorer": [
+        {
+          "id": "flagMarshal.inventory",
+          "name": "Feature Flags"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "flagMarshal.toggleSort",
+          "when": "view == flagMarshal.inventory",
+          "group": "navigation"
+        },
+        {
+          "command": "flagMarshal.scan",
+          "when": "view == flagMarshal.inventory",
+          "group": "navigation"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "flagMarshal.reveal",
+          "when": "false"
+        }
+      ]
+    }
+  }
+}

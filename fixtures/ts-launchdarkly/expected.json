@@ -1,0 +1,84 @@
+{
+  "schemaVersion": "1.0",
+  "tool": {
+    "name": "flag-marshal",
+    "coreVersion": "0.1.3"
+  },
+  "root": "ts-launchdarkly",
+  "positionEncoding": "utf-16",
+  "flags": [
+    {
+      "key": "checkout-v2",
+      "references": [
+        {
+          "key": "checkout-v2",
+          "range": {
+            "file": "src/checkout.ts",
+            "start": {
+              "line": 5,
+              "character": 29
+            },
+            "end": {
+              "line": 5,
+              "character": 42
+            }
+          },
+          "provider": "launchdarkly",
+          "language": "typescript",
+          "kind": "production-code",
+          "resolution": "resolved"
+        },
+        {
+          "key": "checkout-v2",
+          "range": {
+            "file": "src/pricing.ts",
+            "start": {
+              "line": 6,
+              "character": 40
+            },
+            "end": {
+              "line": 6,
+              "character": 53
+            }
+          },
+          "provider": "launchdarkly",
+          "language": "typescript",
+          "kind": "production-code",
+          "resolution": "resolved"
+        }
+      ],
+      "inConfiguration": false,
+      "evidence": [],
+      "confidence": "unknown"
+    },
+    {
+      "key": "express-shipping",
+      "references": [
+        {
+          "key": "express-shipping",
+          "range": {
+            "file": "src/checkout.ts",
+            "start": {
+              "line": 8,
+              "character": 29
+            },
+            "end": {
+              "line": 8,
+              "character": 47
+            }
+          },
+          "provider": "launchdarkly",
+          "language": "typescript",
+          "kind": "production-code",
+          "resolution": "resolved"
+        }
+      ],
+      "inConfiguration": false,
+      "evidence": [],
+      "confidence": "unknown"
+    }
+  ],
+  "findings": [],
+  "unresolvedReferences": [],
+  "unsupportedProviders": []
+}

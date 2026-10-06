@@ -1,0 +1,156 @@
+{
+  "schemaVersion": "1.0",
+  "tool": {
+    "name": "flag-marshal",
+    "coreVersion": "0.1.3"
+  },
+  "root": "java-spring-conditional",
+  "positionEncoding": "utf-16",
+  "flags": [
+    {
+      "key": "features.legacy-export",
+      "references": [
+        {
+          "key": "features.legacy-export",
+          "range": {
+            "file": "src/main/java/com/example/ReportingConfig.java",
+            "start": {
+              "line": 16,
+              "character": 34
+            },
+            "end": {
+              "line": 16,
+              "character": 58
+            }
+          },
+          "provider": "spring-conditional",
+          "language": "java",
+          "kind": "production-code",
+          "resolution": "resolved"
+        },
+        {
+          "key": "features.legacy-export",
+          "range": {
+            "file": "src/main/resources/application.properties",
+            "start": {
+              "line": 3,
+              "character": 0
+            },
+            "end": {
+              "line": 3,
+              "character": 22
+            }
+          },
+          "provider": "properties",
+          "language": "properties",
+          "kind": "configuration",
+          "resolution": "resolved"
+        }
+      ],
+      "inConfiguration": true,
+      "evidence": [],
+      "confidence": "unknown"
+    },
+    {
+      "key": "features.nightly-reports",
+      "references": [
+        {
+          "key": "features.nightly-reports",
+          "range": {
+            "file": "src/main/java/com/example/ReportingConfig.java",
+            "start": {
+              "line": 10,
+              "character": 34
+            },
+            "end": {
+              "line": 10,
+              "character": 60
+            }
+          },
+          "provider": "spring-conditional",
+          "language": "java",
+          "kind": "production-code",
+          "resolution": "resolved"
+        },
+        {
+          "key": "features.nightly-reports",
+          "range": {
+            "file": "src/main/resources/application.properties",
+            "start": {
+              "line": 2,
+              "character": 0
+            },
+            "end": {
+              "line": 2,
+              "character": 24
+            }
+          },
+          "provider": "properties",
+          "language": "properties",
+          "kind": "configuration",
+          "resolution": "resolved"
+        }
+      ],
+      "inConfiguration": true,
+      "evidence": [],
+      "confidence": "unknown"
+    },
+    {
+      "key": "features.retired-dashboard",
+      "references": [
+        {
+          "key": "features.retired-dashboard",
+          "range": {
+            "file": "src/main/resources/application.properties",
+            "start": {
+              "line": 4,
+              "character": 0
+            },
+            "end": {
+              "line": 4,
+              "character": 26
+            }
+          },
+          "provider": "properties",
+          "language": "properties",
+          "kind": "configuration",
+          "resolution": "resolved"
+        }
+      ],
+      "inConfiguration": true,
+      "evidence": [],
+      "confidence": "unknown"
+    }
+  ],
+  "findings": [
+    {
+      "id": "flag.absent-from-code",
+      "flagKey": "features.retired-dashboard",
+      "severity": "warning",
+      "confidence": "medium",
+      "evidence": [
+        {
+          "kind": "absent-from-code",
+          "detail": true
+        },
+        {
+          "kind": "reference-count",
+          "detail": 0
+        }
+      ],
+      "range": {
+        "file": "src/main/resources/application.properties",
+        "start": {
+          "line": 4,
+          "character": 0
+        },
+        "end": {
+          "line": 4,
+          "character": 26
+        }
+      }
+    }
+  ],
+  "unresolvedReferences": [],
+  "unsupportedProviders": []
+}

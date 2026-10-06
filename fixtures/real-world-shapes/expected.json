@@ -1,0 +1,128 @@
+{
+  "schemaVersion": "1.0",
+  "tool": {
+    "name": "flag-marshal",
+    "coreVersion": "0.1.3"
+  },
+  "root": "real-world-shapes",
+  "positionEncoding": "utf-16",
+  "flags": [
+    {
+      "key": "acmeco.allow-override-user-expiration",
+      "references": [
+        {
+          "key": "acmeco.allow-override-user-expiration",
+          "range": {
+            "file": "src/main/kotlin/com/example/Conditionals.kt",
+            "start": {
+              "line": 6,
+              "character": 12
+            },
+            "end": {
+              "line": 6,
+              "character": 51
+            }
+          },
+          "provider": "spring-conditional",
+          "language": "kotlin",
+          "kind": "production-code",
+          "resolution": "resolved"
+        },
+        {
+          "key": "acmeco.allow-override-user-expiration",
+          "range": {
+            "file": "src/main/resources/application-aws_dev.yaml",
+            "start": {
+              "line": 1,
+              "character": 2
+            },
+            "end": {
+              "line": 1,
+              "character": 32
+            }
+          },
+          "provider": "properties",
+          "language": "properties",
+          "kind": "configuration",
+          "resolution": "resolved"
+        }
+      ],
+      "inConfiguration": true,
+      "evidence": [],
+      "confidence": "unknown"
+    },
+    {
+      "key": "checkout-v2",
+      "references": [
+        {
+          "key": "checkout-v2",
+          "range": {
+            "file": "src/main/java/com/example/RealFlags.java",
+            "start": {
+              "line": 15,
+              "character": 36
+            },
+            "end": {
+              "line": 15,
+              "character": 49
+            }
+          },
+          "provider": "launchdarkly",
+          "language": "java",
+          "kind": "production-code",
+          "resolution": "resolved"
+        }
+      ],
+      "inConfiguration": false,
+      "evidence": [],
+      "confidence": "unknown"
+    },
+    {
+      "key": "scheduledJobs.aiAppointment.enabled",
+      "references": [
+        {
+          "key": "scheduledJobs.aiAppointment.enabled",
+          "range": {
+            "file": "src/main/kotlin/com/example/Conditionals.kt",
+            "start": {
+              "line": 12,
+              "character": 12
+            },
+            "end": {
+              "line": 12,
+              "character": 49
+            }
+          },
+          "provider": "spring-conditional",
+          "language": "kotlin",
+          "kind": "production-code",
+          "resolution": "resolved"
+        },
+        {
+          "key": "scheduledJobs.aiAppointment.enabled",
+          "range": {
+            "file": "src/main/resources/application-aws_dev.yaml",
+            "start": {
+              "line": 5,
+              "character": 4
+            },
+            "end": {
+              "line": 5,
+              "character": 11
+            }
+          },
+          "provider": "properties",
+          "language": "properties",
+          "kind": "configuration",
+          "resolution": "resolved"
+        }
+      ],
+      "inConfiguration": true,
+      "evidence": [],
+      "confidence": "unknown"
+    }
+  ],
+  "findings": [],
+  "unresolvedReferences": [],
+  "unsupportedProviders": []
+}

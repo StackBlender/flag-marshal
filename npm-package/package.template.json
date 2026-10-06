@@ -1,0 +1,35 @@
+{
+  "name": "@stackblender/flag-marshal",
+  "description": "Find feature-flag debt across JavaScript, TypeScript, Java, and Kotlin repositories.",
+  "type": "module",
+  "license": "MIT",
+  "author": "StackBlender",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/StackBlender/flag-marshal.git"
+  },
+  "homepage": "https://github.com/StackBlender/flag-marshal#readme",
+  "bugs": {
+    "url": "https://github.com/StackBlender/flag-marshal/issues"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "flag-marshal": "./dist/frontends/cli/main.js",
+    "marshal": "./dist/frontends/cli/main.js"
+  },
+  "files": ["dist", "catalog", "schema", "LICENSE", "README.md", "THIRD_PARTY_NOTICES.md"],
+  "keywords": [
+    "feature-flags",
+    "technical-debt",
+    "launchdarkly",
+    "openfeature",
+    "unleash",
+    "togglz"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
+}

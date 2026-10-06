@@ -1,0 +1,417 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stackblender.dev/schema/flag-marshal/v1/scan-report.schema.json",
+  "title": "ScanReport",
+  "description": "The wire contract between the Flag Marshal core and every frontend. This file is the source of truth: TypeScript and Kotlin models are generated from it, never hand-written. Frontends are renderers of this payload. PRE-RELEASE CONTRACT POLICY: Flag Marshal is unpublished, so version 1.0 is still mutable \u2014 enum members may be added and shapes refined without a version bump, because no external consumer exists to break. Two rules already apply and survive first release: a field added within a version is optional, never required; and once published, any breaking change bumps the major version. Delete this paragraph at first release.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "tool",
+    "root",
+    "positionEncoding",
+    "flags",
+    "unresolvedReferences",
+    "findings"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "description": "Contract version. Consumers must reject a major version they do not understand.",
+      "type": "string",
+      "const": "1.0"
+    },
+    "tool": {
+      "$ref": "#/$defs/ToolInfo"
+    },
+    "root": {
+      "description": "Absolute path of the workspace root that was analyzed.",
+      "type": "string",
+      "minLength": 1
+    },
+    "positionEncoding": {
+      "$ref": "#/$defs/PositionEncoding"
+    },
+    "flags": {
+      "description": "Every flag discovered, in deterministic order by key.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/FlagRecord"
+      }
+    },
+    "unresolvedReferences": {
+      "description": "References whose flag key could not be read statically. They belong to no flag record, so they are reported here rather than dropped. Computed keys are never guessed \u2014 this array is the product's central credibility guarantee made visible.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/FlagReference"
+      }
+    },
+    "unsupportedProviders": {
+      "description": "Flag providers detected in the workspace that this build cannot analyze. Reporting a small inventory while silently ignoring an entire flag platform is as misleading as a false positive, so the gap is stated rather than hidden. Optional: added within contract 1.0, so a report written by an older build without it is still valid.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "evidence",
+          "files"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "evidence": {
+            "description": "What gave it away, such as an imported module.",
+            "type": "string"
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "findings": {
+      "description": "Rule results, in deterministic order.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Finding"
+      }
+    }
+  },
+  "$defs": {
+    "ToolInfo": {
+      "title": "ToolInfo",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "coreVersion"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "const": "flag-marshal"
+        },
+        "coreVersion": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "PositionEncoding": {
+      "title": "PositionEncoding",
+      "description": "How the `character` field of a Position is counted. Declared once per report so each frontend converts at its own edge: IntelliJ uses character offsets, LSP uses UTF-16 code units, tree-sitter emits bytes. Never leave this implicit.",
+      "type": "string",
+      "enum": [
+        "utf-8",
+        "utf-16",
+        "utf-32"
+      ]
+    },
+    "Position": {
+      "title": "Position",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "line",
+        "character"
+      ],
+      "properties": {
+        "line": {
+          "description": "Zero-based line number.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "character": {
+          "description": "Zero-based offset within the line, counted per the report's positionEncoding.",
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "SourceRange": {
+      "title": "SourceRange",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file",
+        "start",
+        "end"
+      ],
+      "properties": {
+        "file": {
+          "description": "Path relative to the workspace root, using forward slashes on every platform.",
+          "type": "string",
+          "minLength": 1
+        },
+        "start": {
+          "$ref": "#/$defs/Position"
+        },
+        "end": {
+          "$ref": "#/$defs/Position"
+        }
+      }
+    },
+    "Provider": {
+      "title": "Provider",
+      "description": "The flag mechanism a reference was detected through.",
+      "type": "string",
+      "enum": [
+        "launchdarkly",
+        "openfeature",
+        "unleash",
+        "togglz",
+        "spring-conditional",
+        "properties",
+        "environment",
+        "custom"
+      ]
+    },
+    "Language": {
+      "title": "Language",
+      "type": "string",
+      "enum": [
+        "typescript",
+        "javascript",
+        "java",
+        "kotlin",
+        "yaml",
+        "properties",
+        "shell"
+      ]
+    },
+    "ReferenceKind": {
+      "title": "ReferenceKind",
+      "description": "Where a reference lives. `declaration` is where a flag is defined \u2014 a Togglz enum constant \u2014 which establishes that the flag exists but is not code that reads it. Test-only usage is tracked separately because a flag referenced solely from tests is a distinct kind of debt.",
+      "type": "string",
+      "enum": [
+        "declaration",
+        "production-code",
+        "test-code",
+        "configuration"
+      ]
+    },
+    "Resolution": {
+      "title": "Resolution",
+      "description": "Whether the flag key could be read from the source. Computed and non-literal keys are reported as `unresolved` and never guessed.",
+      "type": "string",
+      "enum": [
+        "resolved",
+        "unresolved"
+      ]
+    },
+    "FlagReference": {
+      "title": "FlagReference",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "key",
+        "range",
+        "provider",
+        "language",
+        "kind",
+        "resolution"
+      ],
+      "properties": {
+        "key": {
+          "description": "The flag key, or null when resolution is `unresolved`.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "range": {
+          "$ref": "#/$defs/SourceRange"
+        },
+        "provider": {
+          "$ref": "#/$defs/Provider"
+        },
+        "language": {
+          "$ref": "#/$defs/Language"
+        },
+        "kind": {
+          "$ref": "#/$defs/ReferenceKind"
+        },
+        "resolution": {
+          "$ref": "#/$defs/Resolution"
+        },
+        "expression": {
+          "description": "For unresolved references, the source text that could not be resolved. Present only to help a human understand why; never parsed downstream.",
+          "type": "string"
+        },
+        "defaultsWhenAbsent": {
+          "description": "True when the call site supplies its own behaviour if no configuration entry exists \u2014 Spring's `matchIfMissing = true`. Absence of configuration is then normal, not a defect.",
+          "type": "boolean"
+        },
+        "helperCandidate": {
+          "description": "For unresolved references only: the name of the enclosing function when the key is one of its own parameters, passed through unchanged. That shape is usually a team's own flag helper, and declaring it under `customPatterns.methods` makes each of its callers readable. A suggestion to the user, never used to attribute anything.",
+          "type": "string"
+        }
+      }
+    },
+    "EvidenceKind": {
+      "title": "EvidenceKind",
+      "description": "Local evidence only. Runtime and provider evidence (rollout percentage, archived-upstream state, recent evaluations) is not available locally and is deliberately absent from v1. `unreadable-languages` records that the scan passed over source it has no grammar for, which is a limit on what any other signal can be taken to mean.",
+      "type": "string",
+      "enum": [
+        "reference-count",
+        "age-since-introduced",
+        "time-since-last-modified",
+        "absent-from-configuration",
+        "absent-from-code",
+        "test-only-references",
+        "unreadable-languages",
+        "module-spread",
+        "branch-complexity",
+        "declared-owner",
+        "declared-expiry",
+        "flag-count",
+        "budget"
+      ]
+    },
+    "Evidence": {
+      "title": "Evidence",
+      "description": "One observation supporting a confidence level. Every finding carries the evidence that produced it, so a user can always see why a claim was made.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "detail"
+      ],
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/EvidenceKind"
+        },
+        "detail": {
+          "description": "Machine-readable value for this observation. Rendered into text by the frontend via the message catalog, never by the core.",
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "null"
+          ]
+        }
+      }
+    },
+    "Confidence": {
+      "title": "Confidence",
+      "description": "How much the local evidence supports the claim. Nothing may be described as safe to delete below `high`, and never without its evidence.",
+      "type": "string",
+      "enum": [
+        "high",
+        "medium",
+        "low",
+        "unknown"
+      ]
+    },
+    "FlagRecord": {
+      "title": "FlagRecord",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "key",
+        "references",
+        "inConfiguration",
+        "evidence",
+        "confidence"
+      ],
+      "properties": {
+        "key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "references": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/FlagReference"
+          }
+        },
+        "inConfiguration": {
+          "description": "Whether the key appears in any parsed configuration source.",
+          "type": "boolean"
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Evidence"
+          }
+        },
+        "debtScore": {
+          "description": "Relative debt weight. Absent until Milestone 5 computes it.",
+          "type": "number",
+          "minimum": 0
+        },
+        "confidence": {
+          "$ref": "#/$defs/Confidence"
+        }
+      }
+    },
+    "Severity": {
+      "title": "Severity",
+      "type": "string",
+      "enum": [
+        "error",
+        "warning",
+        "info"
+      ]
+    },
+    "FindingId": {
+      "title": "FindingId",
+      "description": "Stable rule identifiers. Each must have a matching entry in catalog/messages.json; a test enforces that both directions stay in sync.",
+      "type": "string",
+      "enum": [
+        "flag.unresolved-key",
+        "flag.missing-in-configuration",
+        "flag.absent-from-code",
+        "flag.test-only",
+        "flag.stale",
+        "flag.missing-owner",
+        "flag.missing-expiry",
+        "flag.expired",
+        "flag.budget-exceeded"
+      ]
+    },
+    "Finding": {
+      "title": "Finding",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "severity",
+        "confidence",
+        "evidence"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/FindingId"
+        },
+        "flagKey": {
+          "description": "The flag this finding concerns, or null for a finding about an unresolvable reference.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "severity": {
+          "$ref": "#/$defs/Severity"
+        },
+        "confidence": {
+          "$ref": "#/$defs/Confidence"
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Evidence"
+          }
+        },
+        "range": {
+          "$ref": "#/$defs/SourceRange"
+        }
+      }
+    }
+  }
+}

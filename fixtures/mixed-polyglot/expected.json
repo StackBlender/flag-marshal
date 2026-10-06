@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "1.0",
+  "tool": {
+    "name": "flag-marshal",
+    "coreVersion": "0.1.3"
+  },
+  "root": "mixed-polyglot",
+  "positionEncoding": "utf-16",
+  "flags": [
+    {
+      "key": "unified-billing",
+      "references": [
+        {
+          "key": "unified-billing",
+          "range": {
+            "file": "service/src/main/java/com/example/BillingService.java",
+            "start": {
+              "line": 15,
+              "character": 33
+            },
+            "end": {
+              "line": 15,
+              "character": 50
+            }
+          },
+          "provider": "launchdarkly",
+          "language": "java",
+          "kind": "production-code",
+          "resolution": "resolved"
+        },
+        {
+          "key": "unified-billing",
+          "range": {
+            "file": "web/src/banner.ts",
+            "start": {
+              "line": 6,
+              "character": 26
+            },
+            "end": {
+              "line": 6,
+              "character": 43
+            }
+          },
+          "provider": "launchdarkly",
+          "language": "typescript",
+          "kind": "production-code",
+          "resolution": "resolved"
+        }
+      ],
+      "inConfiguration": false,
+      "evidence": [],
+      "confidence": "unknown"
+    }
+  ],
+  "findings": [],
+  "unresolvedReferences": [],
+  "unsupportedProviders": []
+}

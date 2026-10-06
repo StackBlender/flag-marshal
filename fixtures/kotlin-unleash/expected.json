@@ -1,0 +1,66 @@
+{
+  "schemaVersion": "1.0",
+  "tool": {
+    "name": "flag-marshal",
+    "coreVersion": "0.1.3"
+  },
+  "root": "kotlin-unleash",
+  "positionEncoding": "utf-16",
+  "flags": [
+    {
+      "key": "search-ranking-v3",
+      "references": [
+        {
+          "key": "search-ranking-v3",
+          "range": {
+            "file": "src/Search.kt",
+            "start": {
+              "line": 7,
+              "character": 30
+            },
+            "end": {
+              "line": 7,
+              "character": 49
+            }
+          },
+          "provider": "unleash",
+          "language": "kotlin",
+          "kind": "production-code",
+          "resolution": "resolved"
+        }
+      ],
+      "inConfiguration": false,
+      "evidence": [],
+      "confidence": "unknown"
+    },
+    {
+      "key": "typeahead",
+      "references": [
+        {
+          "key": "typeahead",
+          "range": {
+            "file": "src/Search.kt",
+            "start": {
+              "line": 14,
+              "character": 30
+            },
+            "end": {
+              "line": 14,
+              "character": 41
+            }
+          },
+          "provider": "unleash",
+          "language": "kotlin",
+          "kind": "production-code",
+          "resolution": "resolved"
+        }
+      ],
+      "inConfiguration": false,
+      "evidence": [],
+      "confidence": "unknown"
+    }
+  ],
+  "findings": [],
+  "unresolvedReferences": [],
+  "unsupportedProviders": []
+}

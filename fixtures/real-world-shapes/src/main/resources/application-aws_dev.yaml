@@ -1,0 +1,15 @@
+acmeco:
+  allow-override-user-expiration: true
+
+scheduledJobs:
+  aiAppointment:
+    enabled: true
+
+# Ordinary boolean settings that are not feature flags. Nothing reads them as
+# flags, so they must stay out of the inventory.
+spring:
+  jpa:
+    show-sql: true
+server:
+  compression:
+    enabled: true

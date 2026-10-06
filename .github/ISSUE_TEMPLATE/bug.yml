@@ -1,0 +1,81 @@
+name: Bug report
+description: Report a crash, wrong exit code, broken output, or install problem.
+title: '[Bug]: '
+labels:
+  - 'type:bug'
+  - 'needs:reproduction'
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For a flag that was reported wrongly or missed, use the detection problem form instead. Do not use this public form for security issues. Replace real flag keys with placeholders and submit only sanitized material.
+  - type: input
+    id: version
+    attributes:
+      label: Flag Marshal version
+      description: Output of `flag-marshal --version`.
+      placeholder: e.g. 0.1.3
+    validations:
+      required: true
+  - type: input
+    id: node
+    attributes:
+      label: Node.js version
+      placeholder: e.g. 22.3.0
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+    validations:
+      required: true
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Where it ran
+      options:
+        - Local terminal
+        - CI
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: command
+    attributes:
+      label: Command
+      placeholder: e.g. npx @stackblender/flag-marshal scan . --json
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction steps
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Relevant sanitized output
+      render: text
+    validations:
+      required: false
+  - type: checkboxes
+    id: safe-content
+    attributes:
+      label: Public-content confirmation
+      options:
+        - label: I replaced real flag keys with placeholders, and this submission contains no secrets, credentials, proprietary source, personal/customer data, or sensitive logs.
+          required: true

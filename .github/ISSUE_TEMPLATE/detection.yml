@@ -1,0 +1,86 @@
+name: Detection problem
+description: A flag was reported wrongly, missed, or given the wrong confidence.
+title: '[Detection]: '
+labels:
+  - 'type:detection'
+  - 'needs:reproduction'
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Flag keys can reveal unreleased features. Rename keys and identifiers to placeholders before posting. A small, sanitized snippet that reproduces the problem is the most useful thing you can provide.
+  - type: dropdown
+    id: problem
+    attributes:
+      label: Problem
+      options:
+        - False positive (something reported as a flag that is not one)
+        - Missed flag (a real flag was not reported)
+        - Wrong key, location, or provider
+        - Wrong confidence or finding
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: provider
+    attributes:
+      label: Flag provider
+      options:
+        - LaunchDarkly
+        - OpenFeature
+        - Unleash
+        - Togglz
+        - Spring @ConditionalOnProperty
+        - Custom helper (.flagmarshal.yml)
+        - Configuration file (.env, properties, YAML)
+        - Other or unsupported provider
+    validations:
+      required: true
+  - type: dropdown
+    id: language
+    attributes:
+      label: Language
+      options:
+        - TypeScript
+        - JavaScript
+        - Java
+        - Kotlin
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Flag Marshal version
+      description: Output of `flag-marshal --version`.
+    validations:
+      required: true
+  - type: textarea
+    id: snippet
+    attributes:
+      label: Sanitized code snippet
+      description: The smallest code that reproduces the problem, with placeholder keys.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected Flag Marshal to report
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What it reported
+      description: Paste the relevant part of `--json` or human output, with placeholder keys.
+      render: text
+    validations:
+      required: true
+  - type: checkboxes
+    id: safe-content
+    attributes:
+      label: Public-content confirmation
+      options:
+        - label: I replaced real flag keys with placeholders, and this submission contains no secrets, credentials, proprietary source, personal/customer data, or sensitive logs.
+          required: true

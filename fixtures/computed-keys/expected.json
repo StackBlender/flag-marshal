@@ -1,0 +1,126 @@
+{
+  "schemaVersion": "1.0",
+  "tool": {
+    "name": "flag-marshal",
+    "coreVersion": "0.1.3"
+  },
+  "root": "computed-keys",
+  "positionEncoding": "utf-16",
+  "flags": [
+    {
+      "key": "audit-log",
+      "references": [
+        {
+          "key": "audit-log",
+          "range": {
+            "file": "src/dynamic.ts",
+            "start": {
+              "line": 19,
+              "character": 26
+            },
+            "end": {
+              "line": 19,
+              "character": 37
+            }
+          },
+          "provider": "launchdarkly",
+          "language": "typescript",
+          "kind": "production-code",
+          "resolution": "resolved"
+        }
+      ],
+      "inConfiguration": false,
+      "evidence": [],
+      "confidence": "unknown"
+    }
+  ],
+  "findings": [
+    {
+      "id": "flag.unresolved-key",
+      "flagKey": null,
+      "severity": "info",
+      "confidence": "high",
+      "evidence": [
+        {
+          "kind": "reference-count",
+          "detail": 1
+        }
+      ],
+      "range": {
+        "file": "src/dynamic.ts",
+        "start": {
+          "line": 8,
+          "character": 26
+        },
+        "end": {
+          "line": 8,
+          "character": 39
+        }
+      }
+    },
+    {
+      "id": "flag.unresolved-key",
+      "flagKey": null,
+      "severity": "info",
+      "confidence": "high",
+      "evidence": [
+        {
+          "kind": "reference-count",
+          "detail": 1
+        }
+      ],
+      "range": {
+        "file": "src/dynamic.ts",
+        "start": {
+          "line": 13,
+          "character": 26
+        },
+        "end": {
+          "line": 13,
+          "character": 29
+        }
+      }
+    }
+  ],
+  "unresolvedReferences": [
+    {
+      "key": null,
+      "range": {
+        "file": "src/dynamic.ts",
+        "start": {
+          "line": 8,
+          "character": 26
+        },
+        "end": {
+          "line": 8,
+          "character": 39
+        }
+      },
+      "provider": "launchdarkly",
+      "language": "typescript",
+      "kind": "production-code",
+      "resolution": "unresolved",
+      "expression": "PREFIX + name"
+    },
+    {
+      "key": null,
+      "range": {
+        "file": "src/dynamic.ts",
+        "start": {
+          "line": 13,
+          "character": 26
+        },
+        "end": {
+          "line": 13,
+          "character": 29
+        }
+      },
+      "provider": "launchdarkly",
+      "language": "typescript",
+      "kind": "production-code",
+      "resolution": "unresolved",
+      "expression": "key"
+    }
+  ],
+  "unsupportedProviders": []
+}

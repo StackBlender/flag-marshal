@@ -1,0 +1,48 @@
+name: Feature or documentation request
+description: Suggest a provider, language, output, integration, or documentation improvement.
+title: '[Feature]: '
+labels:
+  - 'type:feature'
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - New flag provider
+        - New language
+        - Configuration sources
+        - Output formats
+        - CI integration
+        - Editor integration
+        - Documentation
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case
+      description: Describe the workflow and need without including private project material or real flag keys.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Suggested outcome
+      description: Explain what a useful result would look like. A request does not imply a roadmap commitment.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+    validations:
+      required: false
+  - type: checkboxes
+    id: safe-content
+    attributes:
+      label: Public-content confirmation
+      options:
+        - label: This submission contains no real flag keys, secrets, credentials, proprietary source, personal/customer data, or sensitive logs.
+          required: true

@@ -1,0 +1,86 @@
+{
+  "version": "1.0",
+  "_comment": "Wording for every finding. The core emits structured findings and never strings; frontends render text from this file so the CLI, VS Code, and IntelliJ stay identical. Every id here must exist in the FindingId enum in schema/v1/scan-report.schema.json, and vice versa \u2014 test/contract/catalog.test.ts enforces both directions. Each entry carries a placeholder-free `rule` summary, used where a rule is described rather than an instance reported \u2014 SARIF rule descriptors, for one.",
+  "messages": {
+    "flag.unresolved-key": {
+      "rule": "Flag key could not be resolved statically",
+      "title": "Flag key could not be resolved",
+      "explanation": "A call to a flag SDK whose key is computed rather than written as a literal, so the key cannot be read from the source. It is reported rather than guessed, and excluded from the inventory. Only calls in files that import the SDK are considered, so this is a real provider call, not a method that happens to share a name with one.",
+      "placeholders": [
+        "expression"
+      ]
+    },
+    "flag.missing-in-configuration": {
+      "rule": "Flag referenced in code but absent from configuration",
+      "title": "Flag {key} is referenced in code but absent from configuration",
+      "explanation": "This flag is read by a mechanism that expects to find it in local configuration, and no configuration source this scan parsed defines it. Flags served by a remote platform are excluded from this rule, so that is not the explanation here. Either the value is supplied somewhere the scan cannot see \u2014 a profile-specific file, an environment variable set at deployment, a config server \u2014 or nothing supplies it and the code this flag guards never takes its active path.",
+      "placeholders": [
+        "key",
+        "referenceCount"
+      ]
+    },
+    "flag.absent-from-code": {
+      "rule": "Flag configured but never referenced in code",
+      "title": "Flag {key} is configured but never referenced",
+      "explanation": "This flag is defined in configuration but no code reads it. Configured flags that nothing evaluates are inert, and they still count toward the flag volume you maintain and pay for.",
+      "placeholders": [
+        "key",
+        "source"
+      ]
+    },
+    "flag.test-only": {
+      "rule": "Flag referenced only from test code",
+      "title": "Flag {key} is referenced only from tests",
+      "explanation": "Every reference to this flag is in test code. The production path no longer uses it, so the remaining references are usually scaffolding left behind after a rollout completed.",
+      "placeholders": [
+        "key",
+        "referenceCount"
+      ]
+    },
+    "flag.stale": {
+      "rule": "Flag appears to have outlived its rollout",
+      "title": "Flag {key} appears stale",
+      "explanation": "Local evidence suggests this flag has outlived its rollout. Review the listed evidence before acting: local analysis cannot see rollout percentage, upstream archive state, or recent evaluations, so it cannot prove a flag is unused in production.",
+      "placeholders": [
+        "key",
+        "ageDays",
+        "referenceCount"
+      ]
+    },
+    "flag.missing-owner": {
+      "rule": "Flag has no declared owner",
+      "title": "Flag {key} has no owner",
+      "explanation": "Policy requires every flag to name an owner. Without one, nobody is accountable for retiring it, which is how a temporary rollout becomes permanent code.",
+      "placeholders": [
+        "key"
+      ]
+    },
+    "flag.missing-expiry": {
+      "rule": "Flag has no declared expiry date",
+      "title": "Flag {key} has no expiry date",
+      "explanation": "Policy requires every flag to declare when it is expected to be gone. An expiry date is what turns flag cleanup from a someday task into a dated one.",
+      "placeholders": [
+        "key"
+      ]
+    },
+    "flag.expired": {
+      "rule": "Flag is past its declared expiry date",
+      "title": "Flag {key} is past its expiry date",
+      "explanation": "This flag declared a date by which it would be removed, and that date has passed. The declaration came from the team that owns it, so this is their own deadline rather than a guess by this tool.",
+      "placeholders": [
+        "key",
+        "expiry",
+        "daysOverdue"
+      ]
+    },
+    "flag.budget-exceeded": {
+      "rule": "Repository is over its flag budget",
+      "title": "This repository holds {count} flags, over its budget of {budget}",
+      "explanation": "A flag budget caps how much flag debt a repository carries at once. Exceeding it means new flags are arriving faster than old ones are being retired.",
+      "placeholders": [
+        "count",
+        "budget"
+      ]
+    }
+  }
+}
