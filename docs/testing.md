@@ -118,6 +118,7 @@ the probes rather than trusting that they still work.
 | `detector-credibility.test.ts` | The defects real repositories exposed: annotation arrays, provider identity, constants, Togglz discovery |
 | `policy.test.ts` | Policy evaluation, the allowlist, violation identity, the ratchet, inline directives |
 | `trend.test.ts` | Debt history reconstructed from baseline revisions, including malformed points |
+| `compare.test.ts` | `--changed-since` identities: flags by key, findings by rule and flag, unresolved references by file, provider and expression, all counted as multisets |
 
 `golden-conformance.test.ts` is the important one: it is where the goldens stop
 being a specification and become a regression test. It covers only the TypeScript
@@ -239,6 +240,29 @@ conversion SARIF requires and pipe escaping in Markdown tables.
 unsubstituted** — a literal `{count}` on screen is the visible symptom of a
 message and its evidence drifting apart. It also fails when a new finding id is
 added to the catalog without a rendering case, so the gap cannot ship quietly.
+
+### Changes since a ref
+
+`changed-since.test.ts` drives `scan` and `check` with `--changed-since` against an
+in-memory snapshot: every output format, the schema validity of `changes`, exit 2
+only for a violation the change introduced, and the usage errors.
+`node-git-snapshot.test.ts` builds real temporary repositories to check the git
+side: the merge base rather than the ref's tip, a subdirectory root, symbolic
+links, 50 concurrent reads including a large multi-byte file through one
+`git cat-file --batch`, refused refs, and uncommitted edits counting as the change.
+
+The cheapest end-to-end check is comparing a repository with itself: `scan
+--changed-since HEAD` on a clean checkout must report no changes. On 2026-10-07
+togglz, unleash and spring-boot from the corpus all did, and the comparison cost
+about one extra scan (togglz 2.6s -> 4.9s, unleash 5.5s -> 10.0s) with no rise in
+peak memory.
+
+```sh
+# S. Compare against the ref's tip instead of the merge base in node-git-snapshot.ts
+#    -> 1 test fails; a branch would be credited with removing main's new flags
+# T. Compare findings as a set rather than a multiset in compare.ts
+#    -> 1 test fails; a second computed key in a file would not be reported
+```
 
 ### Every capability, no configuration
 

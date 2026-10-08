@@ -1,6 +1,7 @@
 import { resolve } from 'node:path';
 import {
   applyRatchet,
+  compareReports,
   CORE_VERSION,
   makeBaseline,
   openWorkspace,
@@ -14,9 +15,9 @@ import {
   type GitHistory,
   type ScanReport,
 } from '../../core/api/index.js';
-import { renderCheck } from './render.js';
+import { renderCheck, renderCheckSince, renderChanges } from './render.js';
 import { renderScan } from './render.js';
-import { renderMarkdown } from './render-markdown.js';
+import { renderChangesMarkdown, renderMarkdown } from './render-markdown.js';
 import { renderSarif } from './render-sarif.js';
 import { starterSettings } from './init.js';
 import { helperCandidates } from '../../present/summary.js';
@@ -38,6 +39,9 @@ Options:
   --json              Shorthand for --format=json
   --no-git            Skip git history; output becomes fully deterministic
   --update-baseline   check: accept current violations as existing debt
+  --changed-since <ref>
+                      scan, check: report only what changed since the merge
+                      base of <ref> and HEAD, such as origin/main
   -h, --help          Show this help
   -v, --version       Show the core version
 
@@ -64,12 +68,25 @@ export interface CliContext {
   readonly createSettings?: (root: string, text: string) => Promise<void>;
   /** Supplies commit history. Omitted, the scan runs without git evidence. */
   readonly git?: (root: string) => GitHistory;
+  /**
+   * Opens the workspace as it was at the merge base of `ref` and `HEAD`, for
+   * `--changed-since`. Rejects with a message that is safe to print: it never
+   * carries file contents or flag keys.
+   */
+  readonly snapshot?: (root: string, ref: string) => Promise<Snapshot>;
   /** Unix seconds treated as "now". Defaults to the wall clock. */
   readonly now?: number;
   /** Resolves a user-supplied path to an absolute one. */
   readonly cwd: string;
   readonly out: (line: string) => void;
   readonly err: (line: string) => void;
+}
+
+/** A workspace at an earlier commit, readable through the filesystem port. */
+export interface Snapshot {
+  readonly commit: string;
+  readonly fs: FileSystem;
+  close(): void;
 }
 
 export async function run(argv: readonly string[], ctx: CliContext): Promise<number> {
@@ -105,17 +122,39 @@ interface Parsed {
   readonly format: Format;
   readonly useGit: boolean;
   readonly updateBaseline: boolean;
+  /** The ref given to `--changed-since`, when comparing. */
+  readonly changedSince?: string;
   readonly error?: string;
 }
 
 function parseArgs(
   command: string,
-  args: readonly string[],
+  argv: readonly string[],
   ctx: CliContext,
   allowed: string[],
 ): Parsed {
-  const positional = args.filter((a) => !a.startsWith('-'));
   const base: Parsed = { format: 'human', useGit: true, updateBaseline: false, root: '' };
+
+  // `--changed-since <ref>` takes a value, so it is lifted out before the ref
+  // could be mistaken for the path. Git users write it both ways.
+  let changedSince: string | undefined;
+  const args: string[] = [];
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i] ?? '';
+    if (arg === '--changed-since' || arg.startsWith('--changed-since=')) {
+      if (!allowed.includes('--changed-since'))
+        return { ...base, error: `unknown option '--changed-since'` };
+      const value = arg.includes('=') ? arg.slice(arg.indexOf('=') + 1) : argv[++i];
+      if (value === undefined || value === '') {
+        return { ...base, error: '--changed-since needs a ref, such as origin/main' };
+      }
+      changedSince = value;
+      continue;
+    }
+    args.push(arg);
+  }
+
+  const positional = args.filter((a) => !a.startsWith('-'));
 
   if (positional.length > 1) {
     return { ...base, error: `${command} takes at most one path, got ${positional.length}` };
@@ -141,6 +180,7 @@ function parseArgs(
     format,
     useGit: !args.includes('--no-git'),
     updateBaseline: args.includes('--update-baseline'),
+    ...(changedSince === undefined ? {} : { changedSince }),
   };
 }
 
@@ -153,14 +193,62 @@ async function analyze(parsed: Parsed, ctx: CliContext): Promise<ScanReport> {
   }).scan();
 }
 
+/**
+ * Scans the workspace now and at the comparison base, and reports the
+ * difference in `changes`.
+ *
+ * Both scans share one git history and one "now". Age-based findings then agree
+ * on both sides, so every change reported comes from code, not from the clock,
+ * and each key's history is looked up once rather than twice.
+ *
+ * Returns a message instead of a report when the comparison cannot be made.
+ */
+async function analyzeChanges(
+  parsed: Parsed & { changedSince: string },
+  ctx: CliContext,
+): Promise<ScanReport | string> {
+  if (ctx.snapshot === undefined) return 'this frontend cannot read git history';
+
+  let snapshot: Snapshot;
+  try {
+    snapshot = await ctx.snapshot(parsed.root, parsed.changedSince);
+  } catch (error) {
+    return `cannot compare: ${error instanceof Error ? error.message : 'git failed'}`;
+  }
+
+  try {
+    const git = ctx.git === undefined || !parsed.useGit ? undefined : ctx.git(parsed.root);
+    const now = ctx.now ?? Math.floor(Date.now() / 1000);
+    const scanOf = (fs: FileSystem): Promise<ScanReport> =>
+      openWorkspace({ root: parsed.root, fs, now, ...(git === undefined ? {} : { git }) }).scan();
+
+    const head = await scanOf(ctx.fs);
+    const base = await scanOf(snapshot.fs);
+    const changes = compareReports(base, head, {
+      ref: parsed.changedSince,
+      commit: snapshot.commit,
+    });
+    return { ...head, changes };
+  } finally {
+    snapshot.close();
+  }
+}
+
+const comparing = (parsed: Parsed): parsed is Parsed & { changedSince: string } =>
+  parsed.changedSince !== undefined;
+
 async function scan(args: readonly string[], ctx: CliContext): Promise<number> {
-  const parsed = parseArgs('scan', args, ctx, ['--json', '--no-git']);
+  const parsed = parseArgs('scan', args, ctx, ['--json', '--no-git', '--changed-since']);
   if (parsed.error !== undefined) {
     ctx.err(`flag-marshal: ${parsed.error}`);
     return EXIT.USAGE;
   }
 
-  const report = await analyze(parsed, ctx);
+  const report = comparing(parsed) ? await analyzeChanges(parsed, ctx) : await analyze(parsed, ctx);
+  if (typeof report === 'string') {
+    ctx.err(`flag-marshal: ${report}`);
+    return EXIT.USAGE;
+  }
 
   // `scan` reports; it never enforces. Exit stays 0 no matter what it finds, so
   // it is safe to run anywhere without failing a pipeline. `check` is the one
@@ -218,16 +306,24 @@ async function exists(ctx: CliContext, path: string): Promise<boolean> {
   }
 }
 
+/**
+ * A report carrying `changes` is about the change, so the human and Markdown
+ * views show only that, and SARIF carries only the findings it introduced. JSON
+ * keeps everything: the whole inventory plus the change set.
+ */
 function format(report: ScanReport, as: Format): string {
+  const changes = report.changes;
   switch (as) {
     case 'json':
       return JSON.stringify(report, null, 2);
     case 'sarif':
-      return renderSarif(report);
+      return renderSarif(
+        changes === undefined ? report : { ...report, findings: changes.introducedFindings },
+      );
     case 'markdown':
-      return renderMarkdown(report);
+      return changes === undefined ? renderMarkdown(report) : renderChangesMarkdown(changes);
     case 'human':
-      return renderScan(report);
+      return changes === undefined ? renderScan(report) : renderChanges(changes);
   }
 }
 
@@ -244,10 +340,22 @@ const isPolicyFinding = (finding: Finding): boolean =>
  * afternoon.
  */
 async function check(args: readonly string[], ctx: CliContext): Promise<number> {
-  const parsed = parseArgs('check', args, ctx, ['--json', '--no-git', '--update-baseline']);
+  const parsed = parseArgs('check', args, ctx, [
+    '--json',
+    '--no-git',
+    '--update-baseline',
+    '--changed-since',
+  ]);
   if (parsed.error !== undefined) {
     ctx.err(`flag-marshal: ${parsed.error}`);
     return EXIT.USAGE;
+  }
+  if (comparing(parsed)) {
+    if (parsed.updateBaseline) {
+      ctx.err('flag-marshal: --update-baseline and --changed-since cannot be combined');
+      return EXIT.USAGE;
+    }
+    return checkSince(parsed, ctx);
   }
 
   const report = await analyze(parsed, ctx);
@@ -279,6 +387,40 @@ async function check(args: readonly string[], ctx: CliContext): Promise<number> 
   }
 
   return result.introduced.length > 0 ? EXIT.POLICY : EXIT.OK;
+}
+
+/**
+ * Enforces policy on what one change introduced, with no baseline at all.
+ *
+ * The comparison is the ratchet: violations already present at the merge base
+ * are someone else's, and only the ones this change adds fail. That makes
+ * `check --changed-since origin/main` usable on a branch without a committed
+ * baseline, and it ignores one if there is.
+ */
+async function checkSince(
+  parsed: Parsed & { changedSince: string },
+  ctx: CliContext,
+): Promise<number> {
+  const report = await analyzeChanges(parsed, ctx);
+  if (typeof report === 'string') {
+    ctx.err(`flag-marshal: ${report}`);
+    return EXIT.USAGE;
+  }
+  const changes = report.changes;
+  const introduced = (changes?.introducedFindings ?? []).filter(isPolicyFinding);
+  const resolved = (changes?.resolvedFindings ?? []).filter(isPolicyFinding);
+
+  if (parsed.format === 'human') {
+    ctx.out(renderCheckSince(parsed.changedSince, introduced, resolved));
+  } else if (parsed.format === 'json') {
+    ctx.out(JSON.stringify({ ...report, findings: introduced }, null, 2));
+  } else {
+    // As in a baseline check, Markdown and SARIF carry what would fail.
+    const { changes: _changes, ...whole } = report;
+    ctx.out(format({ ...whole, findings: introduced }, parsed.format));
+  }
+
+  return introduced.length > 0 ? EXIT.POLICY : EXIT.OK;
 }
 
 /**

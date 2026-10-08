@@ -2,6 +2,7 @@
 import { run } from './cli.js';
 import { nodeFileSystem } from '../node/node-filesystem.js';
 import { nodeGitHistory } from '../node/node-git.js';
+import { openGitSnapshot } from '../node/node-git-snapshot.js';
 import { nodeBaselines } from '../node/node-baselines.js';
 import { serveStdio } from '../rpc/stdio.js';
 import { createSettingsFile } from '../node/node-settings.js';
@@ -9,6 +10,7 @@ import { createSettingsFile } from '../node/node-settings.js';
 process.exitCode = await run(process.argv.slice(2), {
   fs: nodeFileSystem,
   git: (root) => nodeGitHistory(root),
+  snapshot: openGitSnapshot,
   baselines: nodeBaselines,
   createSettings: createSettingsFile,
   serve: () =>

@@ -80,6 +80,10 @@
       "items": {
         "$ref": "#/$defs/Finding"
       }
+    },
+    "changes": {
+      "description": "Present only when the report was asked to compare against an earlier commit (`--changed-since`). What this change does to the flag inventory, relative to the merge base of the requested ref and HEAD. Every other field still describes the whole workspace as it is now. Optional: added within contract 1.0.",
+      "$ref": "#/$defs/ChangeSet"
     }
   },
   "$defs": {
@@ -410,6 +414,112 @@
         },
         "range": {
           "$ref": "#/$defs/SourceRange"
+        }
+      }
+    },
+    "ChangeSet": {
+      "title": "ChangeSet",
+      "description": "Differences between the workspace at a base commit and the workspace now. Flags are matched by key, findings by rule and flag key, and unresolved references by file, provider and expression, so moving code within a file is not a change.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "since",
+        "addedFlags",
+        "removedFlags",
+        "changedFlags",
+        "introducedFindings",
+        "resolvedFindings",
+        "introducedUnresolved",
+        "resolvedUnresolved"
+      ],
+      "properties": {
+        "since": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "ref",
+            "commit"
+          ],
+          "properties": {
+            "ref": {
+              "description": "The ref as the user gave it.",
+              "type": "string",
+              "minLength": 1
+            },
+            "commit": {
+              "description": "The commit compared against: the merge base of `ref` and HEAD.",
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "addedFlags": {
+          "description": "Keys of flags that exist now and did not at the base, sorted.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "removedFlags": {
+          "description": "Keys of flags that existed at the base and no longer exist, sorted.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "changedFlags": {
+          "description": "Flags present in both whose number of references changed, sorted by key.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "key",
+              "referencesBefore",
+              "referencesAfter"
+            ],
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "referencesBefore": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "referencesAfter": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        },
+        "introducedFindings": {
+          "description": "Findings present now and not at the base, with their current positions.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Finding"
+          }
+        },
+        "resolvedFindings": {
+          "description": "Findings present at the base and not now. Positions refer to the base commit.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Finding"
+          }
+        },
+        "introducedUnresolved": {
+          "description": "Unresolved references present now and not at the base.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/FlagReference"
+          }
+        },
+        "resolvedUnresolved": {
+          "description": "Unresolved references present at the base and not now. Positions refer to the base commit.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/FlagReference"
+          }
         }
       }
     }

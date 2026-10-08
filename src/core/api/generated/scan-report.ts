@@ -104,6 +104,7 @@ export interface ScanReport {
    * Rule results, in deterministic order.
    */
   findings: Finding[];
+  changes?: ChangeSet;
 }
 export interface ToolInfo {
   name: 'flag-marshal';
@@ -184,4 +185,51 @@ export interface Finding {
   confidence: Confidence;
   evidence: Evidence[];
   range?: SourceRange;
+}
+/**
+ * Present only when the report was asked to compare against an earlier commit (`--changed-since`). What this change does to the flag inventory, relative to the merge base of the requested ref and HEAD. Every other field still describes the whole workspace as it is now. Optional: added within contract 1.0.
+ */
+export interface ChangeSet {
+  since: {
+    /**
+     * The ref as the user gave it.
+     */
+    ref: string;
+    /**
+     * The commit compared against: the merge base of `ref` and HEAD.
+     */
+    commit: string;
+  };
+  /**
+   * Keys of flags that exist now and did not at the base, sorted.
+   */
+  addedFlags: string[];
+  /**
+   * Keys of flags that existed at the base and no longer exist, sorted.
+   */
+  removedFlags: string[];
+  /**
+   * Flags present in both whose number of references changed, sorted by key.
+   */
+  changedFlags: {
+    key: string;
+    referencesBefore: number;
+    referencesAfter: number;
+  }[];
+  /**
+   * Findings present now and not at the base, with their current positions.
+   */
+  introducedFindings: Finding[];
+  /**
+   * Findings present at the base and not now. Positions refer to the base commit.
+   */
+  resolvedFindings: Finding[];
+  /**
+   * Unresolved references present now and not at the base.
+   */
+  introducedUnresolved: FlagReference[];
+  /**
+   * Unresolved references present at the base and not now. Positions refer to the base commit.
+   */
+  resolvedUnresolved: FlagReference[];
 }

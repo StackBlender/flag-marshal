@@ -20,6 +20,7 @@ export type {
   Confidence,
   Evidence,
   EvidenceKind,
+  ChangeSet,
   Finding,
   FindingId,
   FlagRecord,
@@ -81,6 +82,7 @@ export {
   type RatchetResult,
 } from '../policy/evaluate.js';
 export { readTrend, type Trend, type TrendPoint } from '../policy/trend.js';
+export { compareReports, type ComparisonBase } from '../compare/compare.js';
 export { BASELINE_PATH, type Baselines } from './baselines.js';
 
 /** Finding ids that `check` enforces. Drift findings are reported, not enforced. */

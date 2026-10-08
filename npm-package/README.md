@@ -90,6 +90,13 @@ flag-marshal check                     # exits 2 only on violations added since
 flag-marshal trend                     # accepted debt over time, from git history
 ```
 
+Or review one branch without any baseline:
+
+```sh
+flag-marshal scan --changed-since origin/main    # flags added, removed, findings introduced
+flag-marshal check --changed-since origin/main   # exits 2 only on violations this branch adds
+```
+
 Metadata can also sit beside the flag, in any comment syntax:
 `// flag-marshal: example-flag owner=team-example expiry=2027-01-31`.
 `check` enforces policy only, never inferred findings such as staleness. Commit

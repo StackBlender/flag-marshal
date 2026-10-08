@@ -1,4 +1,5 @@
 import {
+  type ChangeSet,
   type RatchetResult,
   type Confidence,
   type Finding,
@@ -215,4 +216,110 @@ function violation(finding: Finding): string[] {
   }
   lines.push('');
   return lines;
+}
+
+/** The short form of a commit, as git prints it. */
+export function shortCommit(commit: string): string {
+  return commit.slice(0, 8);
+}
+
+/**
+ * Renders what one change did to the flag inventory.
+ *
+ * Only the change: a reviewer looking at a branch wants to know what it adds,
+ * not to reread the whole repository's debt. The full inventory is still in
+ * `--json`, and `scan` without the option still prints it.
+ */
+export function renderChanges(changes: ChangeSet): string {
+  const since = `${changes.since.ref} (merge base ${shortCommit(changes.since.commit)})`;
+  const findings = changes.introducedFindings.filter((f) => f.id !== 'flag.unresolved-key');
+  const resolved = changes.resolvedFindings.filter((f) => f.id !== 'flag.unresolved-key');
+
+  const parts = [
+    changes.addedFlags.length > 0 ? `${count(changes.addedFlags.length, 'flag')} added` : '',
+    changes.removedFlags.length > 0 ? `${count(changes.removedFlags.length, 'flag')} removed` : '',
+    changes.changedFlags.length > 0
+      ? `${count(changes.changedFlags.length, 'flag')} with changed references`
+      : '',
+    findings.length > 0 ? `${count(findings.length, 'finding')} introduced` : '',
+    resolved.length > 0 ? `${count(resolved.length, 'finding')} resolved` : '',
+    changes.introducedUnresolved.length > 0
+      ? `${count(changes.introducedUnresolved.length, 'unresolved key')} introduced`
+      : '',
+    changes.resolvedUnresolved.length > 0
+      ? `${count(changes.resolvedUnresolved.length, 'unresolved key')} resolved`
+      : '',
+  ].filter((part) => part !== '');
+
+  if (parts.length === 0) return `No flag changes since ${since}.`;
+
+  const lines = [`Changes since ${since}:`, `  ${parts.join(', ')}`, ''];
+
+  if (changes.addedFlags.length > 0) {
+    lines.push('Flags added:');
+    for (const key of changes.addedFlags) lines.push(`  ${key}`);
+    lines.push('');
+  }
+  if (changes.removedFlags.length > 0) {
+    lines.push('Flags removed:');
+    for (const key of changes.removedFlags) lines.push(`  ${key}`);
+    lines.push('');
+  }
+  if (changes.changedFlags.length > 0) {
+    lines.push('References changed:');
+    for (const flag of changes.changedFlags) {
+      lines.push(`  ${flag.key}  ${flag.referencesBefore} -> ${flag.referencesAfter}`);
+    }
+    lines.push('');
+  }
+  if (findings.length > 0) {
+    lines.push('Findings introduced:');
+    lines.push('');
+    for (const finding of findings) {
+      lines.push(`  ${fillTitle(finding)}  [${confidenceLabel(finding.confidence)}]`);
+      if (finding.range !== undefined) {
+        lines.push(`      ${location(finding.range.file, finding.range.start.line)}`);
+      }
+      lines.push(`      why: ${evidenceSummary(finding)}`);
+      lines.push('');
+    }
+  }
+  if (resolved.length > 0) {
+    lines.push('Findings resolved:');
+    for (const finding of resolved) lines.push(`  ${fillTitle(finding)}`);
+    lines.push('');
+  }
+  if (changes.introducedUnresolved.length > 0) {
+    lines.push('Unresolved keys introduced (computed, so not read; never guessed):');
+    for (const ref of changes.introducedUnresolved) {
+      const where = location(ref.range.file, ref.range.start.line);
+      lines.push(`  ${where}  [${ref.provider}]  ${ref.expression ?? ''}`.trimEnd());
+    }
+    lines.push('');
+  }
+
+  return lines.join('\n').trimEnd();
+}
+
+/** Renders `check --changed-since`: what this change would fail on. */
+export function renderCheckSince(
+  ref: string,
+  introduced: readonly Finding[],
+  resolved: readonly Finding[],
+): string {
+  const lines: string[] = [];
+  if (introduced.length === 0) {
+    lines.push(`No new policy violations since ${ref}.`);
+  } else {
+    lines.push(`${count(introduced.length, 'new policy violation')} since ${ref}:`);
+    lines.push('');
+    for (const finding of introduced) lines.push(...violation(finding));
+  }
+  if (resolved.length > 0) {
+    const verb = resolved.length === 1 ? 'is' : 'are';
+    lines.push(
+      `${count(resolved.length, 'policy violation')} from ${ref} ${verb} fixed by this change.`,
+    );
+  }
+  return lines.join('\n').trimEnd();
 }

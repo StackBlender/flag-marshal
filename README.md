@@ -125,6 +125,16 @@ baseline records what already exists, so debt can hold steady or fall but never
 rise. `check` enforces policy only — never the drift findings, which are
 inferences.
 
+Or skip the baseline and review one change against the branch it came from:
+
+```sh
+flag-marshal scan --changed-since origin/main    # "adds checkout-v3 with no owner"
+flag-marshal check --changed-since origin/main   # fails only on what this branch adds
+```
+
+The comparison is with the merge base, as a pull request shows it, and includes
+uncommitted edits.
+
 ## One free tool
 
 Every capability — scanning, every provider, custom helpers, `check` with the

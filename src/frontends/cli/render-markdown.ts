@@ -1,4 +1,4 @@
-import type { Finding, ScanReport, Trend } from '../../core/api/index.js';
+import type { ChangeSet, Finding, ScanReport, Trend } from '../../core/api/index.js';
 import { fillTitle } from '../../present/index.js';
 import {
   debtReasons,
@@ -112,4 +112,69 @@ function escape(text: string): string {
 
 function plural(n: number, noun: string): string {
   return n === 1 ? noun : `${noun}s`;
+}
+
+/**
+ * A pull-request comment about one change: what it adds, removes and fixes.
+ *
+ * The comment a reviewer wants on a branch is "this adds `checkout-v3` with no
+ * owner", not the repository's whole debt again, so that is all this shows.
+ */
+export function renderChangesMarkdown(changes: ChangeSet): string {
+  const lines: string[] = ['## Flag Marshal', ''];
+  const since = `\`${changes.since.ref}\` (merge base \`${changes.since.commit.slice(0, 8)}\`)`;
+  const findings = changes.introducedFindings.filter((f) => f.id !== 'flag.unresolved-key');
+  const resolved = changes.resolvedFindings.filter((f) => f.id !== 'flag.unresolved-key');
+  const unresolved = changes.introducedUnresolved.length;
+
+  const nothing =
+    changes.addedFlags.length === 0 &&
+    changes.removedFlags.length === 0 &&
+    changes.changedFlags.length === 0 &&
+    findings.length === 0 &&
+    resolved.length === 0 &&
+    unresolved === 0 &&
+    changes.resolvedUnresolved.length === 0;
+  if (nothing) {
+    lines.push(`No flag changes since ${since}.`);
+    return lines.join('\n');
+  }
+
+  lines.push(
+    `Since ${since}: **${changes.addedFlags.length}** added · **${changes.removedFlags.length}** removed · ` +
+      `**${findings.length}** ${plural(findings.length, 'finding')} introduced · **${resolved.length}** resolved`,
+  );
+
+  if (changes.addedFlags.length > 0) {
+    lines.push('', `**Added:** ${changes.addedFlags.map((key) => `\`${key}\``).join(', ')}`);
+  }
+  if (changes.removedFlags.length > 0) {
+    lines.push('', `**Removed:** ${changes.removedFlags.map((key) => `\`${key}\``).join(', ')}`);
+  }
+  if (changes.changedFlags.length > 0) {
+    const moved = changes.changedFlags.map(
+      (flag) => `\`${flag.key}\` ${flag.referencesBefore} → ${flag.referencesAfter}`,
+    );
+    lines.push('', `**References changed:** ${moved.join(', ')}`);
+  }
+
+  if (findings.length > 0) {
+    lines.push('', '| Introduced | Flag | Confidence | Location |');
+    lines.push('| --- | --- | --- | --- |');
+    for (const finding of findings) lines.push(row(finding));
+  }
+  if (resolved.length > 0) {
+    lines.push('', '<details>', `<summary>${resolved.length} resolved</summary>`, '');
+    for (const finding of resolved) lines.push(`- ${escape(fillTitle(finding))}`);
+    lines.push('', '</details>');
+  }
+  if (unresolved > 0) {
+    lines.push(
+      '',
+      `> This change adds ${unresolved} ${plural(unresolved, 'call site')} whose flag key is computed, so it could not be`,
+      '> read from the source. These are reported rather than guessed.',
+    );
+  }
+
+  return lines.join('\n');
 }

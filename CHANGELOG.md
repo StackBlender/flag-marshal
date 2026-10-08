@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- **New `--changed-since <ref>`** on `scan` and `check` reports what one change does
+  to the flag inventory: flags added and removed, references gained or lost,
+  findings introduced and resolved, and new computed keys. It compares the working
+  tree with the merge base of `<ref>` and `HEAD`. `check --changed-since` fails
+  only on policy violations the change introduces, with no baseline needed. JSON
+  reports carry the comparison in a new optional `changes` field.
+
 ## 0.1.3 — 2026-09-22
 
 Flag Marshal is now free and open source under the MIT License. Every capability

@@ -1,6 +1,6 @@
 # Flag Marshal — implementation roadmap
 
-Last updated: 2026-09-22
+Last updated: 2026-10-07
 
 This is the incremental build plan and cross-session handoff record for Flag Marshal.
 It is written so that an agent with **no chat history** can open it, determine the
@@ -53,11 +53,11 @@ one Conventional Commit message; do not create the commit.
 | --- | --- |
 | Repository | **Public** `StackBlender/flag-marshal`, a new repository created 2026-09-22. The previous private repository was retired; its scrubbed history is not carried over |
 | Current phase | **One free standalone tool, decided by the user 2026-09-22.** No paid tier, no licensing, no CI product; the entitlement seam and the GitHub Action are removed and every capability runs everywhere. Open-sourcing is under consideration, not decided |
-| Last completed slice | **Open-source 0.1.3 prepared** (2026-09-22) — moved into the new public repository, support repository folded in, package links repointed, version bumped |
-| **Next slice** | The user commits and pushes the new repository, then publishes 0.1.3 (see "Open-source 0.1.3"). After that, "Next candidates — recorded 2026-09-22": the PR-scoped scan is buildable; the rest needs a decision. Then M11, M12, M13 |
-| Tests | 616 across 36 files in `npm run check` (entitlement and Action tests removed 2026-09-22), plus 8 integration tests in a real VS Code (passing 2026-09-22), a corpus check when the corpus is present (baseline updated 2026-09-22), and an installed-tarball smoke test |
+| Last completed slice | **PR-scoped scan, `--changed-since <ref>`** (2026-10-07) — `scan` and `check` compare the working tree with the merge base of a ref; see "Next candidates". Unreleased; listed in `CHANGELOG.md` |
+| **Next slice** | Publishing 0.1.3, or a 0.1.4 carrying `--changed-since`, is the user's to run. Every remaining "Next candidates" item needs a user decision (single-pass git evidence waits for a repository that shows the cost). Then M11, M12, M13 |
+| Tests | 641 across 39 files in `npm run check` (25 added 2026-10-07 for `--changed-since`), plus 8 integration tests in a real VS Code (passing 2026-09-22), a corpus check when the corpus is present (baseline updated 2026-09-22), and an installed-tarball smoke test |
 | Fixture corpus | 8 fixtures with committed goldens, all reproduced by the engine |
-| Capabilities | All free: scan, every provider, custom helpers, `check` + baseline ratchet, `trend`, JSON/Markdown/SARIF, VS Code, `serve --stdio`, `init` |
+| Capabilities | All free: scan, every provider, custom helpers, `check` + baseline ratchet, `trend`, JSON/Markdown/SARIF, VS Code, `serve --stdio`, `init`, `--changed-since` on `scan` and `check` (CLI only so far) |
 | Paid tier | **None.** Dropped 2026-09-22 |
 | Entitlement seam | **Removed** 2026-09-22 (`src/core/entitlement/`, every gate, and their tests) |
 | Published anywhere | `@stackblender/flag-marshal` 0.1.0-0.1.2 on npm under the old proprietary terms. **0.1.3 is prepared, not published:** first MIT release, every capability free, links to the new public repository |
@@ -175,6 +175,12 @@ change here.
 | Spring prefix | Composed as Spring does — `prefix` plus a dot unless present, applied to every name. An unreadable prefix makes the key unresolved, never the bare name |
 | Helper suggestion | Named only for a bare, never-reassigned parameter of a named function, and never for a name shared with a built-in SDK method. A suggestion attributes nothing |
 | Helper attribution | Callers of declared helpers are relabelled to an SDK only when **every** declared helper was seen forwarding to that one SDK. Otherwise they stay `custom` |
+| `--changed-since` base | The **merge base** of the ref and `HEAD`, never the ref's tip, so a branch is not credited with flags `main` added after it was cut. The head side is the working tree, uncommitted edits included |
+| `--changed-since` reading | A frontend `FileSystem` over git objects (`ls-tree` once, one long-lived `cat-file --batch`), so the core scans the past exactly as it scans the present. No core change, no new process in core |
+| `--changed-since` fairness | Both scans share one git history and one "now", so age-based findings agree on both sides and every reported change comes from code, not the clock. Keys are looked up once |
+| Change identity | Flags by key; findings by `violationKey` (the baseline's identity); unresolved references by file, provider and expression. Multisets, so a second alike computed key is new |
+| Change contract | Optional `changes` (`ChangeSet`) on `ScanReport`, additive within 1.0. Every other field still describes the whole workspace now |
+| `check --changed-since` | The merge base replaces the baseline: only violations the change introduces exit 2. A baseline file is not read; `--update-baseline` with it is a usage error |
 
 ---
 
@@ -1814,11 +1820,23 @@ tier question, so it is buildable. The rest still needs a decision on its merits
       remotely served flags: today they have at most two local signals, so "safe
       to delete" can never be shown for them. Sits close to "no provider API
       integrations".
-- [ ] **PR-scoped scan, `--changed-since <ref>` — buildable since 2026-09-22.**
-      Diff two inventories: "this change adds `checkout-v3` with no owner", "this
-      change removes the last reference to `legacy-export`". No tier question
-      remains. Useful locally and in anyone's own pipeline; building a CI
-      integration around it is still out of scope.
+- [x] **PR-scoped scan, `--changed-since <ref>` — complete 2026-10-07.** Picked
+      by the user on 2026-10-07 as the next feature, to be built hands-off.
+      `scan --changed-since <ref>` (or `=<ref>`) lists flags added and removed,
+      reference counts that moved, findings introduced and resolved, and new or
+      removed computed keys; human and Markdown show only the change, SARIF only
+      the introduced findings, JSON the whole report plus `changes`.
+      `check --changed-since <ref>` exits 2 only on policy violations the change
+      introduces, with no baseline. Pieces: `compareReports` in
+      `src/core/compare/`, `openGitSnapshot` in `src/frontends/node/`, the
+      `ChangeSet` schema def. An unknown ref, no common history, or a directory
+      outside git exits 1 with a message that never carries file contents or flag
+      keys. Verified: comparing togglz, unleash and spring-boot from the corpus with
+      their own `HEAD` reports no changes, at about one extra scan of cost and no
+      extra peak memory. **Not done:** the RPC server and VS Code do not expose it
+      (an editor would want "changes on this branch" as a tree filter, which is a
+      separate slice); a branch that only *moves* a flag between files shows no
+      change by design. Building a CI integration around it is still out of scope.
 - [ ] **Scope the unresolved-key cap.** An unresolved LaunchDarkly call cannot be
       an Unleash flag or a Spring property, but OpenFeature, custom helpers and
       Spring can front anything, so this helps mixed repositories only. Changes

@@ -31,8 +31,31 @@ flag-marshal scan [path]
 | `--format=markdown` | A report suitable for sharing or a pull-request comment |
 | `--format=sarif` | SARIF 2.1.0 for code-scanning tools |
 | `--no-git` | Skip repository history. Output becomes fully deterministic, but flag-age evidence is unavailable |
+| `--changed-since <ref>` | Report only what changed since `<ref>`; see below |
 
 `scan` always exits with code 0, even when it reports findings.
+
+### What a change does: `--changed-since`
+
+```sh
+flag-marshal scan --changed-since origin/main
+flag-marshal scan --changed-since=origin/main --format=markdown
+```
+
+Compares the working tree, uncommitted edits included, with the merge base of
+`<ref>` and `HEAD`, the same comparison a pull request shows. A branch is not
+credited with flags that `main` added after the branch was cut. The report lists
+flags added and removed, flags whose number of references changed, findings
+introduced and resolved, and new computed keys.
+
+Flags are matched by key and findings by rule and flag, so moving code is not a
+change. Human and Markdown output show only the change. JSON carries the whole
+report plus a `changes` object. SARIF carries only the introduced findings.
+
+The comparison needs a git repository that contains `<ref>`. In CI, fetch it first
+(for example `fetch-depth: 0` with `actions/checkout`). If `<ref>` is unknown or
+shares no history with `HEAD`, the command exits 1 rather than guessing. `--no-git`
+still works with it: it skips age evidence, not the comparison.
 
 Flag age and staleness come from Git history. In CI, check out the full history (for
 example `fetch-depth: 0` with `actions/checkout`), or age evidence is missing.
@@ -59,6 +82,15 @@ flag-marshal check                     # exits 2 only on violations added since
 
 The baseline is written to `.flagmarshal-baseline.json`. Commit it so everyone
 shares one. `check` accepts `--format` and `--no-git` like `scan`.
+
+```sh
+flag-marshal check --changed-since origin/main   # exits 2 only on violations this branch adds
+```
+
+With `--changed-since`, the merge base takes the place of the baseline: violations
+already present there pass, and only those the change introduces fail. No baseline
+file is needed, and one that exists is not read. It cannot be combined with
+`--update-baseline`.
 
 | Exit code | Meaning |
 | --- | --- |
