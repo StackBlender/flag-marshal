@@ -83,6 +83,13 @@ export {
 } from '../policy/evaluate.js';
 export { readTrend, type Trend, type TrendPoint } from '../policy/trend.js';
 export { compareReports, type ComparisonBase } from '../compare/compare.js';
+export type {
+  FileRewrite,
+  FlagValue,
+  RefactorPreview,
+  Refusal,
+  RefusalReason,
+} from '../refactor/preview.js';
 export { BASELINE_PATH, type Baselines } from './baselines.js';
 
 /** Finding ids that `check` enforces. Drift findings are reported, not enforced. */

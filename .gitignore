@@ -5,7 +5,6 @@ artifacts/
 *.tsbuildinfo
 .DS_Store
 *.log
-.vscode-test/
 
 # Local AI coding-tool configuration; never committed.
 .serena/

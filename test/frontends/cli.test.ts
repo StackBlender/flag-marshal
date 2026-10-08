@@ -108,6 +108,13 @@ describe('cli basics', () => {
     expect(err).toContain("unknown command 'wat'");
   });
 
+  it('no longer has the editor server, dropped with the editor frontends', async () => {
+    const { code, err, out } = await capture(['serve', '--stdio']);
+    expect(code).toBe(EXIT.USAGE);
+    expect(err).toContain("unknown command 'serve'");
+    expect(out).not.toContain('serve');
+  });
+
   it('rejects an unknown option to scan', async () => {
     const { code, err } = await capture(['scan', '--nope']);
     expect(code).toBe(EXIT.USAGE);

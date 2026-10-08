@@ -41,9 +41,6 @@ describe('the public npm artifact', () => {
     expect(files.some((file) => file.endsWith('.d.ts'))).toBe(false);
     expect(files.some((file) => file.endsWith('.map'))).toBe(false);
 
-    // Editor frontends ship through their own marketplaces. An `npx` user should
-    // not download a VS Code view model they have no way to run.
-    expect(files.filter((file) => file.includes('frontends/vscode'))).toEqual([]);
     expect(
       files.some((file) => file.includes('frontends/cli')),
       'the CLI itself must still be there',

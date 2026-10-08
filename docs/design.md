@@ -300,6 +300,12 @@ Ruby are additive grammar work and are demand-driven, not speculative.
 
 ### Reuse across frontends
 
+> **Superseded in part, 2026-10-07, by the user:** Flag Marshal is a command-line
+> and CI tool only. The VS Code extension and the `serve --stdio` editor server
+> were removed and the IntelliJ plugin will not be built. The core/frontend
+> boundary, the versioned JSON contract, the message catalog and `src/present`
+> stand; everything below about editors is history.
+
 Flag Marshal ships four frontends over one core. The rule that keeps them from
 diverging: **frontends are dumb renderers of a versioned JSON contract, and nothing
 else crosses the boundary.** Target is roughly 85–90% shared logic, with the

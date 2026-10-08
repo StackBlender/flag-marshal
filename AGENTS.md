@@ -51,7 +51,8 @@ requires rewriting the commit.
 
 ## Architecture boundaries
 
-These are the rules that keep four frontends affordable. Both directions are
+Flag Marshal is a command-line and CI tool. These rules keep the analysis testable
+and its JSON output a stable contract other tools can build on. Both directions are
 enforced by ESLint *and* by `test/architecture/boundaries.test.ts`, which is
 authoritative because lint can be silenced with an inline disable comment.
 
@@ -87,9 +88,14 @@ authoritative because lint can be silenced with an inline disable comment.
   installation. The entitlement seam was removed. Do not reintroduce a gate, a
   licence check, an activation flow, a payment processor, or billing
   configuration without an explicit user decision.
-- **No dedicated CI product.** The GitHub Action was removed on 2026-09-22. `check`
-  keeps its exit codes, so anyone can run it in their own pipeline, but building a
-  CI integration, action, or hosted check requires an explicit user decision.
+- **No editor frontends.** Decided by the user on 2026-10-07: the VS Code
+  extension and the editor server (`serve --stdio`) were removed, and the IntelliJ
+  plugin will not be built. Do not add an editor integration, language server, or
+  editor API import without an explicit user decision.
+- **CLI and CI are the focus** (user, 2026-10-07). Making `flag-marshal` work well
+  in pipelines (output files, CI annotations, CI-aware defaults, documented
+  recipes for CI systems) is authorized. Publishing anything to a marketplace,
+  creating accounts, or any hosted check stays the user's.
 - **No hosted backend**, database, or background cloud processing.
 - **No publishing.** Do not publish to npm, create releases, or create external
   accounts. The repository-root `package.json` stays `"private": true`; only the

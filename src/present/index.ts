@@ -55,11 +55,6 @@ export function fillTitle(finding: Finding): string {
   return text;
 }
 
-/** Why this finding matters, from the catalog. Never authored in a frontend. */
-export function explanationOf(finding: Finding): string {
-  return messageCatalog[finding.id].explanation;
-}
-
 /** Renders the evidence that produced the claim, so nothing is asserted bare. */
 export function evidenceSummary(finding: Finding): string {
   const parts: string[] = [];
@@ -84,10 +79,31 @@ export function evidenceSummary(finding: Finding): string {
         parts.push(`spans ${count(Number(item.detail), 'module')}`);
         break;
       case 'age-since-introduced':
-        parts.push(`introduced ${ageLabel(item.detail)} ago`);
+        // An expired flag carries its days overdue here, which is not its age.
+        parts.push(
+          finding.id === 'flag.expired'
+            ? `${ageLabel(item.detail)} past its expiry`
+            : `introduced ${ageLabel(item.detail)} ago`,
+        );
         break;
       case 'time-since-last-modified':
         parts.push(`last changed ${ageLabel(item.detail)} ago`);
+        break;
+      case 'declared-owner':
+        parts.push(
+          typeof item.detail === 'string' ? `owner ${item.detail}` : 'no owner is declared',
+        );
+        break;
+      case 'declared-expiry':
+        parts.push(
+          typeof item.detail === 'string' ? `expiry ${item.detail}` : 'no expiry is declared',
+        );
+        break;
+      case 'flag-count':
+        parts.push(count(Number(item.detail), 'flag'));
+        break;
+      case 'budget':
+        parts.push(`a budget of ${String(item.detail)}`);
         break;
       default:
         parts.push(`${item.kind}: ${String(item.detail)}`);

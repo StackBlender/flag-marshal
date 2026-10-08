@@ -1,13 +1,36 @@
 # Changelog
 
-## Unreleased
+## 0.2.0 — 2026-10-07
 
+- **New CI formats:** `--format=github` prints GitHub Actions annotations, and
+  `--format=codequality` writes GitLab's Code Quality report. Both work with
+  `scan` and `check`, and with `--changed-since` carry only what the change
+  introduced.
+- **CI recipes** in `docs/ci.md`: GitHub Actions annotations, a job summary and
+  SARIF upload; GitLab's Code Quality widget; and plain commands for anything
+  else.
+- **CI-aware defaults:** `--changed-since=auto` finds the pull request's base on
+  GitHub, GitLab, Bitbucket and Azure Pipelines. A shallow clone, the default
+  checkout in most CI, is now treated as having no history instead of reporting
+  every flag as new, with a warning saying how to fetch it.
+- Evidence now reads "no owner is declared" rather than `declared-owner: false`,
+  and an expired flag says how far past its expiry it is rather than calling that
+  its age.
+- **Removed: the VS Code extension and `serve --stdio`.** Flag Marshal is now a
+  command-line and CI tool only. `flag-marshal serve` is an unknown command and
+  exits 1.
 - **New `--changed-since <ref>`** on `scan` and `check` reports what one change does
   to the flag inventory: flags added and removed, references gained or lost,
   findings introduced and resolved, and new computed keys. It compares the working
   tree with the merge base of `<ref>` and `HEAD`. `check --changed-since` fails
   only on policy violations the change introduces, with no baseline needed. JSON
   reports carry the comparison in a new optional `changes` field.
+- **New `preview <key> --on|--off`** shows the diff that resolves one flag to a
+  fixed value, and writes nothing; `--format=diff` pipes into `git apply`. It
+  covers TypeScript and JavaScript reads that are the whole condition of an `if`
+  or a `?:`, directly or through a `const` used only that way, and refuses
+  anything it cannot rewrite exactly, naming each place.
+  A refusal exits 3.
 
 ## 0.1.3 — 2026-09-22
 

@@ -48,7 +48,14 @@ export async function openGitSnapshot(root: string, ref: string): Promise<GitSna
     ).trim();
     commit = (await git(['merge-base', tip, 'HEAD'])).trim();
   } catch {
-    throw new SnapshotError(`no common history with '${ref}'`);
+    const shallow = await git(['rev-parse', '--is-shallow-repository'])
+      .then((out) => out.trim() === 'true')
+      .catch(() => false);
+    throw new SnapshotError(
+      shallow
+        ? `no common history with '${ref}' in this shallow clone; fetch full history (for example fetch-depth: 0)`
+        : `no common history with '${ref}'`,
+    );
   }
 
   let listing: string;

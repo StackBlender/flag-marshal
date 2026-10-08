@@ -1,4 +1,4 @@
-import { resolve } from 'node:path';
+import { relative, resolve, sep } from 'node:path';
 import {
   applyRatchet,
   compareReports,
@@ -13,12 +13,16 @@ import {
   type FileSystem,
   type Finding,
   type GitHistory,
+  type RefactorPreview,
   type ScanReport,
 } from '../../core/api/index.js';
+import { unifiedDiff } from './render-diff.js';
+import { refusalText } from '../../present/refactor.js';
 import { renderCheck, renderCheckSince, renderChanges } from './render.js';
 import { renderScan } from './render.js';
 import { renderChangesMarkdown, renderMarkdown } from './render-markdown.js';
 import { renderSarif } from './render-sarif.js';
+import { renderCodeQuality, renderGithub } from './render-ci.js';
 import { starterSettings } from './init.js';
 import { helperCandidates } from '../../present/summary.js';
 
@@ -32,16 +36,20 @@ Commands:
   init [path]    Write a starter .flagmarshal.yml, declaring helpers it finds
   check [path]   Enforce flag policy; exits 2 on a new violation
   trend [path]   Show how accepted flag debt has moved over time
-  serve --stdio  Long-running analysis server for editor frontends
+  preview <key> --on|--off [path]
+                 Show the diff that resolves one flag to a fixed value.
+                 Writes nothing; --format=diff output pipes into git apply
 
 Options:
-  --format=<fmt>      human (default), json, markdown, or sarif
+  --format=<fmt>      human (default), json, markdown, sarif, github
+                      (Actions annotations), or codequality (GitLab)
   --json              Shorthand for --format=json
   --no-git            Skip git history; output becomes fully deterministic
   --update-baseline   check: accept current violations as existing debt
   --changed-since <ref>
                       scan, check: report only what changed since the merge
-                      base of <ref> and HEAD, such as origin/main
+                      base of <ref> and HEAD, such as origin/main. "auto"
+                      reads the pull request's base from the CI environment
   -h, --help          Show this help
   -v, --version       Show the core version
 
@@ -50,15 +58,16 @@ existing debt so CI fails only on violations added after that point.
 
 Analysis is local-only. Flag Marshal makes no network calls.`;
 
-/** Exit codes are part of the CLI contract: 0 ok, 1 usage error, 2 policy breach. */
-export const EXIT = { OK: 0, USAGE: 1, POLICY: 2 } as const;
+/**
+ * Exit codes are part of the CLI contract: 0 ok, 1 usage error, 2 policy breach,
+ * 3 a refactor preview refused because it could not be shown exactly.
+ */
+export const EXIT = { OK: 0, USAGE: 1, POLICY: 2, REFUSED: 3 } as const;
 
 export interface CliContext {
   readonly fs: FileSystem;
   /** Overrides the baseline path, for tests. */
   readonly baselineFile?: string;
-  /** Runs the stdio analysis server. Supplied only by frontends that own streams. */
-  readonly serve?: () => Promise<void>;
   /** Baseline persistence. The core never writes files. */
   readonly baselines?: Baselines;
   /**
@@ -74,6 +83,10 @@ export interface CliContext {
    * carries file contents or flag keys.
    */
   readonly snapshot?: (root: string, ref: string) => Promise<Snapshot>;
+  /** True when `root` is a shallow clone, so the CLI can say why ages are missing. */
+  readonly shallow?: (root: string) => Promise<boolean>;
+  /** The process environment, read only to find a pull request's base in CI. */
+  readonly env?: Readonly<Record<string, string | undefined>>;
   /** Unix seconds treated as "now". Defaults to the wall clock. */
   readonly now?: number;
   /** Resolves a user-supplied path to an absolute one. */
@@ -107,15 +120,15 @@ export async function run(argv: readonly string[], ctx: CliContext): Promise<num
 
   if (command === 'check') return check(rest, ctx);
   if (command === 'trend') return trend(rest, ctx);
-  if (command === 'serve') return serve(rest, ctx);
+  if (command === 'preview') return preview(rest, ctx);
 
   ctx.err(`flag-marshal: unknown command '${command}'`);
   ctx.out(USAGE);
   return EXIT.USAGE;
 }
 
-export type Format = 'human' | 'json' | 'markdown' | 'sarif';
-const FORMATS: readonly Format[] = ['human', 'json', 'markdown', 'sarif'];
+export type Format = 'human' | 'json' | 'markdown' | 'sarif' | 'github' | 'codequality';
+const FORMATS: readonly Format[] = ['human', 'json', 'markdown', 'sarif', 'github', 'codequality'];
 
 interface Parsed {
   readonly root: string;
@@ -237,6 +250,69 @@ async function analyzeChanges(
 const comparing = (parsed: Parsed): parsed is Parsed & { changedSince: string } =>
   parsed.changedSince !== undefined;
 
+/**
+ * Where each CI system names a pull request's base, most exact first. GitLab
+ * gives the merge base itself; the others give a branch name, which a full
+ * checkout has as `origin/<branch>`.
+ */
+const PULL_REQUEST_BASES: readonly {
+  readonly variable: string;
+  readonly ref: (value: string) => string;
+}[] = [
+  { variable: 'CI_MERGE_REQUEST_DIFF_BASE_SHA', ref: (sha) => sha },
+  { variable: 'GITHUB_BASE_REF', ref: (branch) => `origin/${branch}` },
+  { variable: 'CI_MERGE_REQUEST_TARGET_BRANCH_NAME', ref: (branch) => `origin/${branch}` },
+  { variable: 'BITBUCKET_PR_DESTINATION_BRANCH', ref: (branch) => `origin/${branch}` },
+  {
+    variable: 'SYSTEM_PULLREQUEST_TARGETBRANCH',
+    ref: (branch) => `origin/${branch.replace(/^refs\/heads\//, '')}`,
+  },
+];
+
+/** The pull request's base from the CI environment, or undefined outside one. */
+export function pullRequestBase(
+  env: Readonly<Record<string, string | undefined>>,
+): { readonly ref: string; readonly variable: string } | undefined {
+  for (const { variable, ref } of PULL_REQUEST_BASES) {
+    const value = env[variable]?.trim();
+    if (value !== undefined && value !== '') return { ref: ref(value), variable };
+  }
+  return undefined;
+}
+
+/**
+ * Replaces `--changed-since=auto` with the pull request's base. Outside a pull
+ * request there is no base to find, and comparing against a guess would report
+ * someone else's changes as this one's, so that is a usage error.
+ */
+function withBase(parsed: Parsed, ctx: CliContext): Parsed | string {
+  if (parsed.changedSince !== 'auto') return parsed;
+  const base = pullRequestBase(ctx.env ?? {});
+  if (base === undefined) {
+    return `--changed-since=auto found no pull request base in the environment; name a ref instead, such as origin/main`;
+  }
+  ctx.err(`flag-marshal: comparing with ${base.ref} (from ${base.variable})`);
+  return { ...parsed, changedSince: base.ref };
+}
+
+/**
+ * Says why flag ages are missing in a shallow clone, the default checkout in
+ * most CI systems. The scan already treats such a clone as having no history;
+ * this tells the reader how to give it one.
+ */
+async function warnIfShallow(
+  parsed: Parsed,
+  ctx: CliContext,
+  missing = 'flag age and staleness are not measured',
+): Promise<void> {
+  if (!parsed.useGit || ctx.git === undefined || ctx.shallow === undefined) return;
+  if (!(await ctx.shallow(parsed.root))) return;
+  ctx.err(
+    `flag-marshal: this is a shallow clone, so ${missing}. ` +
+      'Fetch full history (fetch-depth: 0 with actions/checkout, GIT_DEPTH: 0 on GitLab).',
+  );
+}
+
 async function scan(args: readonly string[], ctx: CliContext): Promise<number> {
   const parsed = parseArgs('scan', args, ctx, ['--json', '--no-git', '--changed-since']);
   if (parsed.error !== undefined) {
@@ -244,7 +320,14 @@ async function scan(args: readonly string[], ctx: CliContext): Promise<number> {
     return EXIT.USAGE;
   }
 
-  const report = comparing(parsed) ? await analyzeChanges(parsed, ctx) : await analyze(parsed, ctx);
+  const based = withBase(parsed, ctx);
+  if (typeof based === 'string') {
+    ctx.err(`flag-marshal: ${based}`);
+    return EXIT.USAGE;
+  }
+  await warnIfShallow(based, ctx);
+
+  const report = comparing(based) ? await analyzeChanges(based, ctx) : await analyze(based, ctx);
   if (typeof report === 'string') {
     ctx.err(`flag-marshal: ${report}`);
     return EXIT.USAGE;
@@ -253,7 +336,7 @@ async function scan(args: readonly string[], ctx: CliContext): Promise<number> {
   // `scan` reports; it never enforces. Exit stays 0 no matter what it finds, so
   // it is safe to run anywhere without failing a pipeline. `check` is the one
   // that fails builds.
-  ctx.out(format(report, parsed.format));
+  ctx.out(format(report, parsed.format, checkoutPrefix(parsed, ctx)));
   return EXIT.OK;
 }
 
@@ -311,20 +394,35 @@ async function exists(ctx: CliContext, path: string): Promise<boolean> {
  * views show only that, and SARIF carries only the findings it introduced. JSON
  * keeps everything: the whole inventory plus the change set.
  */
-function format(report: ScanReport, as: Format): string {
+function format(report: ScanReport, as: Format, prefix: string): string {
   const changes = report.changes;
+  // SARIF and CI annotations describe what a change introduced when asked
+  // about one, so a pull request is annotated only with its own findings.
+  const annotated =
+    changes === undefined ? report : { ...report, findings: changes.introducedFindings };
   switch (as) {
+    case 'github':
+      return renderGithub(annotated, prefix);
+    case 'codequality':
+      return renderCodeQuality(annotated, prefix);
     case 'json':
       return JSON.stringify(report, null, 2);
     case 'sarif':
-      return renderSarif(
-        changes === undefined ? report : { ...report, findings: changes.introducedFindings },
-      );
+      return renderSarif(annotated);
     case 'markdown':
       return changes === undefined ? renderMarkdown(report) : renderChangesMarkdown(changes);
     case 'human':
       return changes === undefined ? renderScan(report) : renderChanges(changes);
   }
+}
+
+/**
+ * The scanned root relative to the working directory, with forward slashes.
+ * CI systems resolve annotation paths against the checkout, which is where a
+ * pipeline runs from, not against the directory that was scanned.
+ */
+function checkoutPrefix(parsed: Parsed, ctx: CliContext): string {
+  return relative(ctx.cwd, parsed.root).split(sep).join('/');
 }
 
 const isPolicyFinding = (finding: Finding): boolean =>
@@ -350,12 +448,18 @@ async function check(args: readonly string[], ctx: CliContext): Promise<number> 
     ctx.err(`flag-marshal: ${parsed.error}`);
     return EXIT.USAGE;
   }
-  if (comparing(parsed)) {
-    if (parsed.updateBaseline) {
+  const based = withBase(parsed, ctx);
+  if (typeof based === 'string') {
+    ctx.err(`flag-marshal: ${based}`);
+    return EXIT.USAGE;
+  }
+  await warnIfShallow(based, ctx);
+  if (comparing(based)) {
+    if (based.updateBaseline) {
       ctx.err('flag-marshal: --update-baseline and --changed-since cannot be combined');
       return EXIT.USAGE;
     }
-    return checkSince(parsed, ctx);
+    return checkSince(based, ctx);
   }
 
   const report = await analyze(parsed, ctx);
@@ -383,7 +487,13 @@ async function check(args: readonly string[], ctx: CliContext): Promise<number> 
   } else {
     // Markdown and SARIF describe what CI would fail on, so they carry the
     // introduced violations rather than everything the baseline already accepts.
-    ctx.out(format({ ...report, findings: result.introduced }, parsed.format));
+    ctx.out(
+      format(
+        { ...report, findings: result.introduced },
+        parsed.format,
+        checkoutPrefix(parsed, ctx),
+      ),
+    );
   }
 
   return result.introduced.length > 0 ? EXIT.POLICY : EXIT.OK;
@@ -417,37 +527,102 @@ async function checkSince(
   } else {
     // As in a baseline check, Markdown and SARIF carry what would fail.
     const { changes: _changes, ...whole } = report;
-    ctx.out(format({ ...whole, findings: introduced }, parsed.format));
+    ctx.out(format({ ...whole, findings: introduced }, parsed.format, checkoutPrefix(parsed, ctx)));
   }
 
   return introduced.length > 0 ? EXIT.POLICY : EXIT.OK;
 }
 
+const PREVIEW_FORMATS = ['human', 'json', 'diff'] as const;
+type PreviewFormat = (typeof PREVIEW_FORMATS)[number];
+
 /**
- * Runs the analysis server on stdin and stdout.
- *
- * Kept deliberately thin: framing and dispatch live in `frontends/rpc`, so this
- * only wires the streams. `--stdio` is required rather than assumed, because a
- * future transport (a socket, a named pipe) should be a new flag rather than a
- * behaviour change for anyone already scripting against this one.
+ * Shows what resolving one flag to a fixed value does to the code. Writes
+ * nothing: the diff is for review, and applying it is a separate step that
+ * belongs to the person reviewing it (`--format=diff | git apply`).
  */
-async function serve(args: readonly string[], ctx: CliContext): Promise<number> {
-  if (!args.includes('--stdio')) {
-    ctx.err('flag-marshal: serve requires --stdio');
+async function preview(args: readonly string[], ctx: CliContext): Promise<number> {
+  const usage = (message: string): number => {
+    ctx.err(`flag-marshal: ${message}`);
     return EXIT.USAGE;
-  }
-  const unknown = args.find((a) => a !== '--stdio');
-  if (unknown !== undefined) {
-    ctx.err(`flag-marshal: unknown option '${unknown}'`);
-    return EXIT.USAGE;
-  }
-  if (ctx.serve === undefined) {
-    ctx.err('flag-marshal: this frontend cannot serve');
-    return EXIT.USAGE;
+  };
+  const positional = args.filter((a) => !a.startsWith('-'));
+  const [key, path, ...extra] = positional;
+  if (key === undefined) return usage('preview needs a flag key');
+  if (extra.length > 0) return usage('preview takes a flag key and at most one path');
+
+  const on = args.includes('--on');
+  const off = args.includes('--off');
+  if (on === off) return usage('preview needs exactly one of --on or --off');
+
+  let format: PreviewFormat = args.includes('--json') ? 'json' : 'human';
+  for (const arg of args.filter((a) => a.startsWith('-'))) {
+    if (arg.startsWith('--format=')) {
+      const value = arg.slice('--format='.length);
+      if (!(PREVIEW_FORMATS as readonly string[]).includes(value)) {
+        return usage(`unknown format '${value}'. Use ${PREVIEW_FORMATS.join(', ')}`);
+      }
+      format = value as PreviewFormat;
+    } else if (!['--on', '--off', '--json', '--no-git'].includes(arg)) {
+      return usage(`unknown option '${arg}'`);
+    }
   }
 
-  await ctx.serve();
-  return EXIT.OK;
+  const root = resolve(ctx.cwd, path ?? '.');
+  const useGit = !args.includes('--no-git') && ctx.git !== undefined;
+  const result = await openWorkspace({
+    root,
+    fs: ctx.fs,
+    ...(useGit && ctx.git !== undefined ? { git: ctx.git(root) } : {}),
+    ...(ctx.now === undefined ? {} : { now: ctx.now }),
+  }).previewResolution(key, on ? 'on' : 'off');
+
+  if (format === 'json') ctx.out(JSON.stringify(result, null, 2));
+  else if (format === 'diff') {
+    if (result.outcome === 'preview') ctx.out(diffOf(result));
+    else ctx.err(renderRefusal(result));
+  } else {
+    ctx.out(result.outcome === 'preview' ? renderPreview(result) : renderRefusal(result));
+  }
+  return result.outcome === 'preview' ? EXIT.OK : EXIT.REFUSED;
+}
+
+function diffOf(result: RefactorPreview): string {
+  return result.files.map((file) => unifiedDiff(file.path, file.before, file.after)).join('\n');
+}
+
+function renderPreview(result: RefactorPreview): string {
+  const sites = result.files.reduce((n, file) => n + file.sites, 0);
+  const files = result.files.length;
+  const reads = sites === 1 ? '1 read' : `${sites} reads`;
+  const where = files === 1 ? '1 file' : `${files} files`;
+  const lines = [
+    `Resolving ${result.key} to ${result.value} rewrites ${reads} in ${where}. Nothing was written.`,
+    `Its staleness confidence is ${result.confidence ?? 'unknown'}. This shows what the code does with`,
+    `the flag ${result.value}; it does not say the flag can be removed. Imports and clients are left as they are.`,
+    `To apply it: flag-marshal preview ${result.key} --${result.value} --format=diff | git apply`,
+    '',
+    diffOf(result),
+  ];
+  return lines.join('\n');
+}
+
+function renderRefusal(result: RefactorPreview): string {
+  // An unknown key is not echoed: flag keys stay out of error output.
+  const subject = result.refusals.some((r) => r.reason === 'unknown-flag')
+    ? 'that flag'
+    : `${result.key} resolved to ${result.value}`;
+  const lines = [`Cannot preview ${subject} exactly:`, ''];
+  for (const refusal of result.refusals) {
+    const where =
+      refusal.file === undefined
+        ? ''
+        : refusal.line === undefined
+          ? `${refusal.file}  `
+          : `${refusal.file}:${refusal.line + 1}  `;
+    lines.push(`  ${where}${refusalText(refusal.reason)}`);
+  }
+  return lines.join('\n');
 }
 
 /**
@@ -467,6 +642,7 @@ async function trend(args: readonly string[], ctx: CliContext): Promise<number> 
     return EXIT.USAGE;
   }
 
+  await warnIfShallow(parsed, ctx, 'the trend covers only the history it fetched');
   const history = await readTrend(ctx.git(parsed.root), ctx.baselineFile ?? BASELINE_PATH);
 
   if (parsed.format === 'json') {

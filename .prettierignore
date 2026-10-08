@@ -1,7 +1,6 @@
 dist/
 coverage/
 artifacts/
-.vscode-test/
 node_modules/
 package-lock.json
 *.tsbuildinfo

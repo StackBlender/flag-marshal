@@ -23,6 +23,8 @@ import { unparsedLanguageOf } from '../detect/unparsed.js';
 import { collectEvidence } from '../evidence/collect.js';
 import { scoreFlag } from '../score/score.js';
 import { noGitHistory, type GitHistory } from '../api/git.js';
+import type { ScanOptions } from '../detect/scan-source.js';
+import { previewResolution, type FlagValue, type RefactorPreview } from '../refactor/preview.js';
 
 export interface OpenWorkspaceOptions {
   /** Absolute path of the workspace root. */
@@ -50,6 +52,18 @@ export interface AnalysisSession {
   readonly root: string;
   /** Inventories every flag in the workspace. */
   scan(): Promise<ScanReport>;
+  /**
+   * A dry run of resolving one flag to a fixed value: the files as they would
+   * be, or why that cannot be shown exactly. Writes nothing.
+   */
+  previewResolution(key: string, value: FlagValue): Promise<RefactorPreview>;
+}
+
+/** A scan, plus what it took to produce it, for capabilities built on a scan. */
+interface Analysis {
+  readonly report: ScanReport;
+  readonly unparsedLanguages: readonly string[];
+  readonly scanOptions: ScanOptions;
 }
 
 /**
@@ -59,7 +73,7 @@ export interface AnalysisSession {
  * claiming a version the package does not have makes every archived report
  * untraceable.
  */
-export const CORE_VERSION = '0.1.3';
+export const CORE_VERSION = '0.2.0';
 
 /** Contract version this build emits. Consumers reject majors they do not know. */
 export const SCHEMA_VERSION = '1.0';
@@ -68,134 +82,152 @@ export function openWorkspace(options: OpenWorkspaceOptions): AnalysisSession {
   const { root, fs } = options;
   const git = options.git ?? noGitHistory;
 
-  return {
+  const session: AnalysisSession = {
     root,
 
     async scan(): Promise<ScanReport> {
-      const { settings } = await readSettings(fs, root);
-      const custom = customAdapter(settings.customMethods);
+      return (await analyze()).report;
+    },
 
-      const candidates: ConfigEntry[] = [];
-      const unparsed = new Set<string>();
-      const inline: Record<string, FlagMetadata> = {};
-      const unsupported = new Map<string, { evidence: string; files: Set<string> }>();
-      const customMethods = custom === undefined ? [] : settings.customMethods;
-
-      const walked = await readWorkspace(fs, root, {
-        candidates,
-        unparsed,
-        inline,
-        unsupported,
-        customMethods,
-      });
-
-      // Togglz is declared once and read everywhere, and the reading files import
-      // the application's enum rather than org.togglz. Discovering the enums
-      // before scanning is what makes those usages recognizable at all.
-      const togglzEnums = await discoverTogglzEnums(walked.interesting);
-
-      // Only a workspace that actually declares a Togglz enum pays a second read.
-      // Those usage files match no static marker — `Features.CHECKOUT` names the
-      // application's own type — so the only way to find them is to look again,
-      // now knowing what to look for.
-      const files = [...walked.interesting];
-      if (togglzEnums.size > 0) {
-        const extra = [...togglzEnums.bySimpleName.keys()];
-        for (const path of walked.deferred) {
-          let text: string;
-          try {
-            text = await fs.readFile(`${root}/${path}`);
-          } catch {
-            continue;
-          }
-          if (mightContainFlags(text, extra)) files.push({ path, text });
-        }
-      }
-
-      const passThroughs = new Map<string, Set<Provider>>();
-      const scanned = await scanSources(iterate(files), {
-        togglzEnums,
-        passThroughs,
-        // The adapter carries the methods into its query; the prefilter needs
-        // them separately or it skips the file before the adapter can run.
-        ...(custom === undefined ? {} : { adapters: [custom], customMethods }),
-      });
-      // A declared helper proven to forward straight into one SDK makes its
-      // callers that SDK's calls. See wrapper.ts for when this is withheld.
-      const wrapped = wrappedProvider(customMethods, passThroughs);
-      const code =
-        wrapped === undefined
-          ? scanned
-          : scanned.map((ref) => (ref.provider === 'custom' ? { ...ref, provider: wrapped } : ref));
-      // A configuration entry under a recognized flag namespace stands on its
-      // own. One under any other namespace — `acmeco.allow-override-user-expiration`
-      // — counts only when code actually reads it. Without this, real Spring
-      // flags are reported as unconfigured; with the namespace rule dropped
-      // entirely, every boolean setting becomes a feature flag.
-      const codeKeys = new Set(
-        code.filter((ref) => ref.key !== null).map((ref) => ref.key as string),
-      );
-      const configuration = candidates
-        .filter((entry) => entry.inFlagNamespace || codeKeys.has(entry.reference.key ?? ''))
-        .map((entry) => entry.reference);
-
-      const index = buildIndex([...code, ...configuration]);
-
-      const unparsedLanguages = [...unparsed].sort();
-      const anyUnresolvedKeys = index.unresolvedReferences.length > 0;
-      const gitUnavailable = !(await git.isAvailable());
-      const now = options.now ?? Math.floor(Date.now() / 1000);
-
-      // Evidence and scoring are per flag, so a record arrives at the rules
-      // already carrying what is known about it.
-      // Evidence for one flag costs a `git log` pickaxe, and they are independent
-      // of each other. Awaiting them one at a time made git the dominant cost of
-      // scanning a repository with many flags — ten seconds of a fourteen-second
-      // Spring Boot scan, spent waiting rather than working. Order is preserved
-      // because the results come back as an ordered array.
-      const scored = await inBatches(index.flags, EVIDENCE_CONCURRENCY, async (flag) => {
-        const evidence = await collectEvidence(flag, { git, now });
-        const { debtScore, confidence } = scoreFlag({
-          evidence,
-          unparsedLanguages,
-          anyUnresolvedKeys,
-          gitUnavailable,
-        });
-        return { ...flag, evidence, debtScore, confidence };
-      });
-      const flags = scored;
-
-      const drift = applyRules({
-        flags,
-        unresolvedReferences: index.unresolvedReferences,
+    async previewResolution(key: string, value: FlagValue): Promise<RefactorPreview> {
+      const { report, unparsedLanguages, scanOptions } = await analyze();
+      return previewResolution({
+        report,
         unparsedLanguages,
+        key,
+        value,
+        scanOptions,
+        readFile: (path) => fs.readFile(`${root}/${path}`),
       });
-
-      // The manifest wins over an inline directive: a central declaration is the
-      // one a reviewer is most likely to be looking at.
-      const metadata: Record<string, FlagMetadata> = { ...inline, ...settings.flags };
-      const policy = evaluatePolicy({ flags, policy: settings.policy, metadata, now });
-
-      const findings = [...drift, ...policy];
-
-      return {
-        schemaVersion: SCHEMA_VERSION,
-        tool: { name: 'flag-marshal', coreVersion: CORE_VERSION },
-        root,
-        positionEncoding: 'utf-16',
-        flags,
-        unresolvedReferences: index.unresolvedReferences,
-        unsupportedProviders: [...unsupported.entries()]
-          .map(([name, seen]) => ({
-            name,
-            evidence: seen.evidence,
-            files: [...seen.files].sort(),
-          }))
-          .sort((a, b) => (a.name < b.name ? -1 : 1)),
-        findings,
-      };
     },
   };
+  return session;
+
+  async function analyze(): Promise<Analysis> {
+    const { settings } = await readSettings(fs, root);
+    const custom = customAdapter(settings.customMethods);
+
+    const candidates: ConfigEntry[] = [];
+    const unparsed = new Set<string>();
+    const inline: Record<string, FlagMetadata> = {};
+    const unsupported = new Map<string, { evidence: string; files: Set<string> }>();
+    const customMethods = custom === undefined ? [] : settings.customMethods;
+
+    const walked = await readWorkspace(fs, root, {
+      candidates,
+      unparsed,
+      inline,
+      unsupported,
+      customMethods,
+    });
+
+    // Togglz is declared once and read everywhere, and the reading files import
+    // the application's enum rather than org.togglz. Discovering the enums
+    // before scanning is what makes those usages recognizable at all.
+    const togglzEnums = await discoverTogglzEnums(walked.interesting);
+
+    // Only a workspace that actually declares a Togglz enum pays a second read.
+    // Those usage files match no static marker — `Features.CHECKOUT` names the
+    // application's own type — so the only way to find them is to look again,
+    // now knowing what to look for.
+    const files = [...walked.interesting];
+    if (togglzEnums.size > 0) {
+      const extra = [...togglzEnums.bySimpleName.keys()];
+      for (const path of walked.deferred) {
+        let text: string;
+        try {
+          text = await fs.readFile(`${root}/${path}`);
+        } catch {
+          continue;
+        }
+        if (mightContainFlags(text, extra)) files.push({ path, text });
+      }
+    }
+
+    const passThroughs = new Map<string, Set<Provider>>();
+    const scanOptions: ScanOptions = {
+      togglzEnums,
+      // The adapter carries the methods into its query; the prefilter needs
+      // them separately or it skips the file before the adapter can run.
+      ...(custom === undefined ? {} : { adapters: [custom], customMethods }),
+    };
+    const scanned = await scanSources(iterate(files), { ...scanOptions, passThroughs });
+    // A declared helper proven to forward straight into one SDK makes its
+    // callers that SDK's calls. See wrapper.ts for when this is withheld.
+    const wrapped = wrappedProvider(customMethods, passThroughs);
+    const code =
+      wrapped === undefined
+        ? scanned
+        : scanned.map((ref) => (ref.provider === 'custom' ? { ...ref, provider: wrapped } : ref));
+    // A configuration entry under a recognized flag namespace stands on its
+    // own. One under any other namespace — `acmeco.allow-override-user-expiration`
+    // — counts only when code actually reads it. Without this, real Spring
+    // flags are reported as unconfigured; with the namespace rule dropped
+    // entirely, every boolean setting becomes a feature flag.
+    const codeKeys = new Set(
+      code.filter((ref) => ref.key !== null).map((ref) => ref.key as string),
+    );
+    const configuration = candidates
+      .filter((entry) => entry.inFlagNamespace || codeKeys.has(entry.reference.key ?? ''))
+      .map((entry) => entry.reference);
+
+    const index = buildIndex([...code, ...configuration]);
+
+    const unparsedLanguages = [...unparsed].sort();
+    const anyUnresolvedKeys = index.unresolvedReferences.length > 0;
+    const gitUnavailable = !(await git.isAvailable());
+    const now = options.now ?? Math.floor(Date.now() / 1000);
+
+    // Evidence and scoring are per flag, so a record arrives at the rules
+    // already carrying what is known about it.
+    // Evidence for one flag costs a `git log` pickaxe, and they are independent
+    // of each other. Awaiting them one at a time made git the dominant cost of
+    // scanning a repository with many flags — ten seconds of a fourteen-second
+    // Spring Boot scan, spent waiting rather than working. Order is preserved
+    // because the results come back as an ordered array.
+    const scored = await inBatches(index.flags, EVIDENCE_CONCURRENCY, async (flag) => {
+      const evidence = await collectEvidence(flag, { git, now });
+      const { debtScore, confidence } = scoreFlag({
+        evidence,
+        unparsedLanguages,
+        anyUnresolvedKeys,
+        gitUnavailable,
+      });
+      return { ...flag, evidence, debtScore, confidence };
+    });
+    const flags = scored;
+
+    const drift = applyRules({
+      flags,
+      unresolvedReferences: index.unresolvedReferences,
+      unparsedLanguages,
+    });
+
+    // The manifest wins over an inline directive: a central declaration is the
+    // one a reviewer is most likely to be looking at.
+    const metadata: Record<string, FlagMetadata> = { ...inline, ...settings.flags };
+    const policy = evaluatePolicy({ flags, policy: settings.policy, metadata, now });
+
+    const findings = [...drift, ...policy];
+
+    const report: ScanReport = {
+      schemaVersion: SCHEMA_VERSION,
+      tool: { name: 'flag-marshal', coreVersion: CORE_VERSION },
+      root,
+      positionEncoding: 'utf-16',
+      flags,
+      unresolvedReferences: index.unresolvedReferences,
+      unsupportedProviders: [...unsupported.entries()]
+        .map(([name, seen]) => ({
+          name,
+          evidence: seen.evidence,
+          files: [...seen.files].sort(),
+        }))
+        .sort((a, b) => (a.name < b.name ? -1 : 1)),
+      findings,
+    };
+    return { report, unparsedLanguages, scanOptions };
+  }
 }
 
 /**

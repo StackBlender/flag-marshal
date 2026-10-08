@@ -23,19 +23,3 @@ jobs:
       - run: npm run test:npm-package
       - name: Production dependency audit
         run: npm audit --omit=dev --audit-level=low
-
-  integration:
-    # The VS Code extension inside a real VS Code. Separate from `check` because
-    # it downloads an editor and needs a display, and because a network hiccup
-    # here must not look like a broken engine.
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      # VS Code is an Electron app: headless CI has no display, and without this
-      # it fails at startup with an error that says nothing about the extension.
-      - run: xvfb-run -a npm run test:integration

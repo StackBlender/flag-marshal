@@ -14,8 +14,6 @@ export default tseslint.config(
     ignores: [
       'dist/**',
       'artifacts/**',
-      // A downloaded VS Code, cached by the integration runner.
-      '.vscode-test/**',
       'coverage/**',
       'node_modules/**',
       // Fixture repositories are sample code for the analyzer to read. They are

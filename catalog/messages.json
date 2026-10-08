@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "_comment": "Wording for every finding. The core emits structured findings and never strings; frontends render text from this file so the CLI, VS Code, and IntelliJ stay identical. Every id here must exist in the FindingId enum in schema/v1/scan-report.schema.json, and vice versa \u2014 test/contract/catalog.test.ts enforces both directions. Each entry carries a placeholder-free `rule` summary, used where a rule is described rather than an instance reported \u2014 SARIF rule descriptors, for one.",
+  "_comment": "Wording for every finding. The core emits structured findings and never strings; every output format renders text from this file so terminal, Markdown and SARIF output stay identical. Every id here must exist in the FindingId enum in schema/v1/scan-report.schema.json, and vice versa \u2014 test/contract/catalog.test.ts enforces both directions. Each entry carries a placeholder-free `rule` summary, used where a rule is described rather than an instance reported \u2014 SARIF rule descriptors, for one.",
   "messages": {
     "flag.unresolved-key": {
       "rule": "Flag key could not be resolved statically",

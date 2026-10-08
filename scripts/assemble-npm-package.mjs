@@ -22,12 +22,6 @@ for (const directory of ['dist', 'catalog', 'schema']) {
   await cp(resolve(root, directory), resolve(target, directory), { recursive: true });
 }
 
-// Editor frontends are distributed through their own marketplaces, never through
-// the CLI tarball. Shipping them here would make every `npx` user download a
-// VS Code view model they can never run.
-for (const editorOnly of ['vscode']) {
-  await rm(resolve(target, 'dist', 'frontends', editorOnly), { recursive: true, force: true });
-}
 for (const file of ['LICENSE', 'THIRD_PARTY_NOTICES.md']) {
   await cp(resolve(root, file), resolve(target, file));
 }

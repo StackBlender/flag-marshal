@@ -28,8 +28,14 @@ export function nodeGitHistory(root: string, options: { timeoutMs?: number } = {
 
   return {
     isAvailable(): Promise<boolean> {
-      available ??= git(['rev-parse', '--is-inside-work-tree'])
-        .then((out) => out.trim() === 'true')
+      // A shallow clone counts as no history. Its pickaxe reaches only back to
+      // the clone's boundary, so every flag would look as young as the oldest
+      // fetched commit: an age that is confidently wrong, not merely missing.
+      available ??= git(['rev-parse', '--is-inside-work-tree', '--is-shallow-repository'])
+        .then((out) => {
+          const [inside, shallow] = out.trim().split('\n');
+          return inside === 'true' && shallow === 'false';
+        })
         .catch(() => false);
       return available;
     },
@@ -84,4 +90,21 @@ export function nodeGitHistory(root: string, options: { timeoutMs?: number } = {
       }
     },
   };
+}
+
+/**
+ * True when `root` is inside a shallow clone, the default checkout in most CI
+ * systems. Callers use it to say why history evidence is missing; the history
+ * port itself already treats a shallow clone as having none.
+ */
+export async function isShallowRepository(root: string): Promise<boolean> {
+  try {
+    const { stdout } = await run('git', ['rev-parse', '--is-shallow-repository'], {
+      cwd: root,
+      timeout: 5_000,
+    });
+    return stdout.trim() === 'true';
+  } catch {
+    return false;
+  }
 }

@@ -53,14 +53,14 @@ one Conventional Commit message; do not create the commit.
 | --- | --- |
 | Repository | **Public** `StackBlender/flag-marshal`, a new repository created 2026-09-22. The previous private repository was retired; its scrubbed history is not carried over |
 | Current phase | **One free standalone tool, decided by the user 2026-09-22.** No paid tier, no licensing, no CI product; the entitlement seam and the GitHub Action are removed and every capability runs everywhere. Open-sourcing is under consideration, not decided |
-| Last completed slice | **PR-scoped scan, `--changed-since <ref>`** (2026-10-07) — `scan` and `check` compare the working tree with the merge base of a ref; see "Next candidates". Unreleased; listed in `CHANGELOG.md` |
-| **Next slice** | Publishing 0.1.3, or a 0.1.4 carrying `--changed-since`, is the user's to run. Every remaining "Next candidates" item needs a user decision (single-pass git evidence waits for a repository that shows the cost). Then M11, M12, M13 |
-| Tests | 641 across 39 files in `npm run check` (25 added 2026-10-07 for `--changed-since`), plus 8 integration tests in a real VS Code (passing 2026-09-22), a corpus check when the corpus is present (baseline updated 2026-09-22), and an installed-tarball smoke test |
+| Last completed slice | **CI recipes** (2026-10-07), closing the "CLI and CI focus" group: `docs/ci.md`, tested. Before it the same day: CI-aware defaults, CI annotation formats, the editor frontends removed (the user's decision), M11 `preview`, `--changed-since`. All unreleased; listed in `CHANGELOG.md` |
+| **Next slice** | The user publishes 0.2.0, then tries `docs/ci.md` in a real GitHub or GitLab pipeline. Remaining candidates are under "CLI and CI focus — 2026-10-07", "What next"; the older "Next candidates" still need a decision |
+| Tests | 621 across 39 files in `npm run check` (74 extension and editor-server tests removed 2026-10-07 with the code they covered; 26 added for CI support), a corpus check when the corpus is present (baseline updated 2026-09-22), and an installed-tarball smoke test |
 | Fixture corpus | 8 fixtures with committed goldens, all reproduced by the engine |
-| Capabilities | All free: scan, every provider, custom helpers, `check` + baseline ratchet, `trend`, JSON/Markdown/SARIF, VS Code, `serve --stdio`, `init`, `--changed-since` on `scan` and `check` (CLI only so far) |
+| Capabilities | All free: scan, every provider, custom helpers, `check` + baseline ratchet, `trend`, JSON/Markdown/SARIF, `init`, `--changed-since` on `scan` and `check`, `preview`. No editor frontends since 2026-10-07 |
 | Paid tier | **None.** Dropped 2026-09-22 |
 | Entitlement seam | **Removed** 2026-09-22 (`src/core/entitlement/`, every gate, and their tests) |
-| Published anywhere | `@stackblender/flag-marshal` 0.1.0-0.1.2 on npm under the old proprietary terms. **0.1.3 is prepared, not published:** first MIT release, every capability free, links to the new public repository |
+| Published anywhere | `@stackblender/flag-marshal` 0.1.0-0.1.2 on npm under the old proprietary terms; 0.1.3, the first MIT release, is on npm. **0.2.0 is prepared, not published** (2026-10-07): everything since 0.1.3, including removing `serve`. Publishing is the user's |
 | Support | Issue forms, SECURITY, SUPPORT, CONTRIBUTING, CLI reference and privacy page now live in this repository. `StackBlender/flag-marshal-support` is being retired by the user |
 | Known blockers | None |
 
@@ -94,10 +94,10 @@ change here.
 | Wording | All human-facing strings come from `messages.json`; core emits none |
 | Shared presentation | `src/present/` fills catalog placeholders and renders evidence for **every** frontend. It imports `core/api` only, and no frontend may import `messages.json` directly — three frontends reading the catalog themselves is how one finding acquires three vocabularies |
 | Cross-frontend testing | Shared golden fixtures are the conformance suite for every frontend |
-| Plugin distribution | VS Code then IntelliJ, both listed publicly, both free like everything else. The paid-capability question under M13 is moot since 2026-09-22 |
-| Binary distribution | Core compiles to a per-platform standalone executable; no end-user Node requirement |
+| Plugin distribution | **Superseded 2026-10-07, by the user: no editor plugins.** Was: VS Code then IntelliJ, both listed publicly |
+| Binary distribution | Core compiles to a per-platform standalone executable; no end-user Node requirement. Its only consumer was the IntelliJ plugin, so since 2026-10-07 it waits for a CI or user need |
 | Range encoding | Line/column with explicit encoding field, declared in the schema; frontends convert at their edge |
-| LSP | Deferred from v1, additive later over the `serve --stdio` boundary |
+| LSP | **Superseded 2026-10-07.** No editor frontends; `serve --stdio` removed |
 | Test runner | Vitest; tests in `test/` mirroring `src/`, helpers do not end in `.test.ts` |
 | Lint / format | ESLint flat config with typescript-eslint; Prettier, with markdown excluded (docs are hand-wrapped prose) |
 | Boundary enforcement | Enforced twice — ESLint for speed, `test/architecture/` as the authority, because lint can be silenced inline |
@@ -164,14 +164,14 @@ change here.
 | Licensing shape | **Superseded 2026-09-22.** No tiers or licensing; see "Product model". Was: Offline Ed25519 signed keys, verified locally, no server or telemetry. Not copy protection; annual expiry, no revocation |
 | Undetermined licences | **Superseded 2026-09-22.** No tiers or licensing; see "Product model". Was: `unknown` grants Free — never Team, never nothing |
 | Licence | **MIT**, decided by the user 2026-09-22. Replaces the proprietary notice; applies from the next release |
-| Product model | **2026-09-22, by the user:** one free standalone tool. Every capability on every installation; no tiers, licence keys, accounts, or dedicated CI product. `check` keeps exit code 2 so anyone can gate their own pipeline or hook |
+| Product model | **2026-09-22, by the user:** one free standalone tool. Every capability on every installation; no tiers, licence keys, or accounts. **Amended 2026-10-07, by the user:** "scrap the extension completely and only focus on the cli / ci tool support". Command line and CI only; CI support is in scope again, marketplace publishing and hosted checks stay the user's |
 | No CLI bypass | **Superseded 2026-09-22.** No tiers or licensing; see "Product model". Was: Team is reachable only by injecting a service, never by a flag or env var |
 | Debt ranking | Only flags with a debt reason are ranked — age past a year, dormancy, never read, test-only, unconfigured. Module spread raises the score but never earns a rank on its own |
 | Ranking wording | A rank shows its reasons, never a second confidence. Confidence stays on findings, where it qualifies one claim; nothing in a ranking says a flag is removable |
 | Custom helper calls | A declared name matches bare calls (`isOn("k")`) as well as member calls. Bare calls stay rejected for built-in SDK methods, which prove nothing without a receiver |
 | Helper pass-through | An SDK call whose key is a bare, never-reassigned parameter of a declared helper is not unresolved — its callers carry the keys. Anything built from the parameter stays unresolved |
 | `init` | Writes only when no settings file exists, and switches nothing on: helpers the scan proved are declared, every policy option stays commented out |
-| Editor order | Debt order by default, name order one click away. The ranking rule is the CLI's, arranged in `model.ts`; `extension.ts` only holds the toggle |
+| Editor order | **Superseded 2026-10-07.** The VS Code extension was removed |
 | Spring prefix | Composed as Spring does — `prefix` plus a dot unless present, applied to every name. An unreadable prefix makes the key unresolved, never the bare name |
 | Helper suggestion | Named only for a bare, never-reassigned parameter of a named function, and never for a name shared with a built-in SDK method. A suggestion attributes nothing |
 | Helper attribution | Callers of declared helpers are relabelled to an SDK only when **every** declared helper was seen forwarding to that one SDK. Otherwise they stay `custom` |
@@ -180,6 +180,12 @@ change here.
 | `--changed-since` fairness | Both scans share one git history and one "now", so age-based findings agree on both sides and every reported change comes from code, not the clock. Keys are looked up once |
 | Change identity | Flags by key; findings by `violationKey` (the baseline's identity); unresolved references by file, provider and expression. Multisets, so a second alike computed key is new |
 | Change contract | Optional `changes` (`ChangeSet`) on `ScanReport`, additive within 1.0. Every other field still describes the whole workspace now |
+| M11 gate | **Changed by the user 2026-10-07.** A preview is gated on the *rewrite* being exact, not on `HIGH` staleness confidence, which no flag still read by production code can reach. The user picks the value; the preview claims only that the diff is what the code does with it, never that the flag is safe to remove. Staleness confidence is shown beside it |
+| Preview scope | TypeScript and JavaScript; every read must be the whole condition of an `if` (a statement in a list, on lines of its own) or a `?:`, through `await`, `!` and parentheses only, or initialize a single-declarator `const` whose every mention in its scope is such a condition (a redeclaration or `{ on }` is not, so it refuses). Any other read refuses the **whole** preview, naming each place. Repository-wide computed keys or unreadable languages refuse too |
+| Preview mechanics | One site at a time with a re-scan between, so nested reads resolve inside the kept branch; the result must re-parse without errors and read the flag nowhere. Kept blocks unwrap unless they declare block-scoped names; multi-line template literals are never reindented; a rewrite that could join two statements (no semicolon before the `if`, or a `?:` branch starting with `(`/`[`/... at statement start) is refused |
+| Preview contract | Hand-written types in `src/core/refactor/preview.ts`, exported from `core/api`; not yet in `schema/v1`. Promote them to the schema when an editor consumes them (M10 code actions), so the Kotlin models are generated rather than written |
+| Preview exit code | `3` means refused. Additive to the 0/1/2 contract |
+| Docs ahead of release | **2026-10-07, by the user:** the public repository may describe unreleased behaviour before it is published to npm. A version prepared but not yet published says so in this table |
 | `check --changed-since` | The merge base replaces the baseline: only violations the change introduces exit 2. A baseline file is not read; `--update-baseline` with it is a usage error |
 
 ---
@@ -1341,7 +1347,7 @@ refused `check`.
 **Evidence.** Full check green, 584 tests across 33 files (one new artifact test);
 installed-tarball smoke test passed for 0.1.2 with the link checks.
 
-### M9b — RPC server for editor frontends — complete
+### M9b — RPC server for editor frontends — complete; **removed 2026-10-07** with the editor frontends
 - [x] `flag-marshal serve --stdio` exposing `AnalysisSession` over JSON-RPC, for
       editors needing incremental updates without a process spawn per keystroke.
 - [x] Same golden-set conformance as the one-shot CLI.
@@ -1390,7 +1396,7 @@ editor makes the cost visible. No cancellation. No `initialize` handshake
 enforcement: the server answers `flagMarshal/scan` whether or not a client
 initialised first, because refusing would buy strictness no client wants.
 
-### M10 — VS Code frontend
+### M10 — VS Code frontend — **removed 2026-10-07** by the user's decision; kept below as history
 
 Split in three because the parts have different testability. Everything decidable
 is in 10a and covered by the ordinary suite; 10b is the part that can only be
@@ -1919,13 +1925,56 @@ repo… keep same versioning and point npm package to it."
 - **Before the first commit** one test fails by design: "collects real git evidence
   for its own repository" needs the fixtures to exist in history.
 
-### M11 — Refactor preview (dry-run only)
-- [ ] For one language and one simple pattern, compute the resulting diff when a
-      flag is resolved to permanently-on or permanently-off.
-- [ ] Preview only. Never write files without an explicit, separate apply step.
-- [ ] Refuse to preview when confidence is below `HIGH`.
+### M11 — Refactor preview (dry-run only) — **complete** 2026-10-07, first shape
 
-### M12 — Publish the VS Code extension
+- [x] For one language and one simple pattern, compute the resulting diff when a
+      flag is resolved to permanently-on or permanently-off. TypeScript and
+      JavaScript (one grammar family), `if` and `?:` conditions:
+      `flag-marshal preview <key> --on|--off [path]`.
+- [x] Preview only. Never write files without an explicit, separate apply step.
+      The core cannot write; the CLI prints a diff, and `--format=diff | git apply`
+      is the user's separate step. A test applies the printed patch with real git
+      and checks the files equal the preview.
+- [x] ~~Refuse to preview when confidence is below `HIGH`.~~ **Replaced by the
+      user 2026-10-07** with "refuse whenever the rewrite cannot be shown exactly"
+      (see Decisions, "M11 gate"). `HIGH` needs three staleness signals, and a flag
+      still read by production code can show at most two, so the original gate
+      would have refused nearly every flag worth rewriting.
+
+**Pieces.** `src/core/refactor/preview.ts` (locate, rewrite, refuse),
+`AnalysisSession.previewResolution`, `src/present/refactor.ts` (refusal wording),
+`src/frontends/cli/render-diff.ts` (Myers line diff, unified format).
+
+**Verified.** 22 tests (`test/core/refactor-preview.test.ts`,
+`test/frontends/preview.test.ts`); five guards probed by breaking them (see
+`docs/testing.md`, "Refactor preview"). Writing the first tests found a real bug:
+a kept `(g = 1)` at the start of a statement would have joined the previous line.
+Corpus sweep: 122 previews over three JS/TS SDK repositories, all refused as
+`unsupported-shape`, in 5 s. That shows robustness, not reach: SDK code reads
+flags in assertions, not in `if`s.
+
+**Limitations.** Leaves imports, the client, and code made unreachable (`return`
+after a kept `return`) as they are. No `else if (flag)`, braceless bodies, or
+`&&`/`||` conditions. The CLI's `preview` re-scans the whole workspace, so it
+costs one scan. The editor frontends do not expose it.
+
+**Second shape — complete 2026-10-07.** `const modern = await
+client.variation('k', ...)` followed by `modern ? 9 : 12`, the refusal
+`fixtures/ts-launchdarkly/src/pricing.ts` produced, now previews. Each use is
+rewritten one at a time with a re-parse between, then the declaration is deleted.
+Only `const`, one declarator, a plain name, in a statement list. Every mention of
+the name in the declaration's scope must be a supported condition, so passing,
+returning, `{ on }`, or redeclaring it refuses, reported at the use. Closures are
+fine: a `const` cannot change. Deleting the declaration is refused when it could
+join the statements around it. 5 tests added and three new guards probed. The
+`checkout-v2` fixture flag, refused before, now previews across both files. The
+corpus sweep is unchanged (122 refusals), because SDK code reads flags inside
+assertions.
+
+**Next.** None in M11 itself; the editor code action it once led to was dropped
+with the editor frontends on 2026-10-07.
+
+### M12 — Publish the VS Code extension — **dropped 2026-10-07**: the extension was removed
 
 Authorized 2026-09-11. The goal is **surface area**, not conversion. StackBlender
 already ships OpenAPI Guard; a second listing under the same publisher reads as a
@@ -1953,7 +2002,7 @@ marketplace distribution works.
       there is no paid tier to lead to. See "The funnel does
       not exist yet" below — without it this is a listing, not a funnel.
 
-### M13 — IntelliJ plugin
+### M13 — IntelliJ plugin — **dropped 2026-10-07**: no editor frontends
 
 Authorized 2026-09-11, after M12. Ordered second because it is the expensive one,
 not the less valuable one — the opposite is true, and that is the tension to keep
@@ -2025,6 +2074,75 @@ by accident while building M13.
 developer outside StackBlender running this on their own repository unprompted, and
 telling you what they wanted next. Both open questions have the same cheap
 experiment behind them, and it is smaller than either milestone above.
+
+### Editor frontends removed — complete (2026-10-07)
+
+The user: "can we scrap the extension completely and only focus on the cli / ci
+tool support for this tool". Done as one slice:
+
+- **Removed:** `src/frontends/vscode/`, `vscode-extension/`,
+  `scripts/assemble-vscode-extension.mjs`, `src/frontends/rpc/` and the
+  `serve --stdio` command (its only clients were editors), `.vscode/`,
+  `.vscode-test.mjs`, the integration tests and their CI job, the fake `vscode`
+  module, and every test of that code (74). Dev dependencies `@types/vscode`,
+  `@vscode/test-cli`, `@vscode/test-electron`, `mocha` and `@types/mocha` are gone;
+  146 lockfile entries removed and no remaining version changed. `explanationOf`
+  went too: only the extension's hovers used it.
+- **Kept:** `src/present/` (the CLI's renderers use it), the `core/api`
+  boundary, and the core's no-editor-API guard. The frontend boundary test now
+  asserts **no** frontend imports an editor API.
+- **Breaking:** `flag-marshal serve --stdio` is now an unknown command, exit 1.
+  Recorded in `CHANGELOG.md`.
+- M9b and M10 stay below as history; M12 and M13 are dropped.
+
+### CLI and CI focus — 2026-10-07
+
+The user's direction replaces "no dedicated CI product". In scope: making the CLI
+work well in pipelines. Not in scope without the user: publishing an Action or
+anything else to a marketplace, accounts, hosted checks. Slices, in order:
+
+- [x] **CI annotation formats — complete 2026-10-07.** `--format=github` prints
+      GitHub Actions workflow commands, so findings annotate a pull request with
+      no code-scanning setup (SARIF upload needs GitHub Advanced Security on
+      private repositories). `--format=codequality` writes GitLab's Code Quality
+      JSON. Both renderers live in `src/frontends/cli/render-ci.ts`, take paths
+      relative to the working directory, and follow `check` and
+      `--changed-since` narrowing exactly as SARIF does. Code Quality
+      fingerprints leave out the line, matching the baseline's identity. Fixed on
+      the way, because annotations would have put it on pull requests: evidence
+      printed raw kinds (`declared-owner: false`), and an expired flag's days
+      overdue were worded as its age. 15 tests. **Not verified inside a real
+      GitHub or GitLab run**: the formats follow each system's documentation,
+      and the recipes slice should run them for real.
+- [x] **CI-aware defaults — complete 2026-10-07.** `--changed-since=auto` reads
+      the base from GitLab's merge base SHA, then `GITHUB_BASE_REF`,
+      `CI_MERGE_REQUEST_TARGET_BRANCH_NAME`, `BITBUCKET_PR_DESTINATION_BRANCH`,
+      `SYSTEM_PULLREQUEST_TARGETBRANCH`; it names its choice on stderr and is a
+      usage error outside a pull request. **A shallow clone now counts as no
+      history** (`nodeGitHistory.isAvailable` is false): its pickaxe stops at the
+      clone boundary, so ages were confidently wrong rather than missing. That is
+      a behaviour change for anyone scanning in a default CI checkout, and the
+      honest one. `scan`, `check` and `trend` warn on stderr with the fix, and a
+      comparison that fails in a shallow clone says so. 7 tests, one against a
+      real `--depth 1` clone. Verified by hand: a full clone on a feature branch
+      with `GITHUB_BASE_REF=main` runs `check --changed-since=auto
+      --format=github`, annotates the new ownerless flag and exits 2.
+- [x] **CI recipes — complete 2026-10-07.** `docs/ci.md`: GitHub Actions
+      (annotations with `check --changed-since=auto --format=github`, a Markdown
+      job summary, SARIF upload with the GHAS caveat), GitLab CI (Code Quality
+      report with `artifacts: when: always` so it uploads on exit 2), and plain
+      commands for Bitbucket, Azure and anything else. `test/docs/ci-recipes.test.ts`
+      parses every YAML block and runs every command through the CLI. The GitHub
+      and GitLab recipes were simulated locally in a full clone with each
+      system's variables set, and behaved as documented. **Not run inside real
+      GitHub or GitLab**, which needs the user's repositories. The recipes pin
+      `@0.2`, the release that adds their options.
+
+**What next, after this group.** Nothing CI-side is queued. Candidates, none
+started: a pull-request comment recipe that updates one comment instead of adding
+one per push (needs a `gh` version check); running the recipes for real in a
+throwaway public repository (needs the user); and the standalone binary, if a
+CI image without Node turns out to matter.
 
 ### Deferred — not authorized
 Standalone per-platform binary (Node SEA); moved out of M3 — see that milestone for
@@ -2125,10 +2243,10 @@ Maintained as the project progresses. Rows are removed when the slice that addre
 
 | Item | Impact | Slice that would address it |
 | --- | --- | --- |
-| **Standalone binary not built** | IntelliJ cannot bundle an engine without Node; `npx` users are unaffected | The IntelliJ frontend slice, or earlier if a user needs Node-free distribution |
+| **Standalone binary not built** | A CI image without Node needs Node installed first; `npx` users are unaffected | Demand-driven, now that IntelliJ is not coming |
 | No provider config files are read | An Unleash or LaunchDarkly export would give a second configuration source | M6 or later |
 | **Git evidence is O(flags x commits)** | One pickaxe per flag, eight in parallel. Measured 2026-09-22: +0.6s on togglz's full 1,764-commit history, ~1s for 200 flags over 5,000 synthetic commits. Unmeasured on very large histories. `--no-git` is the escape hatch | One streamed `git log -p` pass computing pickaxe semantics for all keys, if a repository shows the cost; see "Next candidates" |
-| **Branch complexity not measured** | The debt score omits how tangled a flag's conditionals are | M11, which needs the same AST context for refactor previews |
+| **Branch complexity not measured** | The debt score omits how tangled a flag's conditionals are | M11 now has the AST context (`locateSite`), but the score does not use it yet; demand-driven |
 | **`HIGH` confidence unreachable for remote SDK flags** | At most two local signals exist for LaunchDarkly, OpenFeature and Unleash flags, so "safe to delete" can never be shown for them | Provider state export files, needs a decision; see "Next candidates" |
 | Unresolved-key cap is repository-wide | One computed key anywhere caps every flag's confidence. Declared helper pass-throughs no longer count | Decision on scoping; see "Next candidates" |
 | A declared custom name can collide with an SDK method | Declaring `isEnabled` by hand matches every `.isEnabled(...)` in the repository, Lombok setters included. Suggestions avoid this; hand-written config is not checked | Warn in settings validation, demand-driven |
@@ -2136,8 +2254,6 @@ Maintained as the project progresses. Rows are removed when the slice that addre
 | Python, Go, C#, Ruby and others still cap confidence | Correct, but a polyglot repository cannot reach `high` | Demand-driven; each is an additive grammar entry |
 | Custom patterns match calls only | Member and bare calls are matched; a homegrown annotation or config shape is not configurable | Demand-driven |
 | Detection requires an SDK import **and** a bound receiver | A file handed an already-constructed client is missed. Declaring the team's helper under `customPatterns` recovers the common case | Type resolution, if demand shows it matters |
-| **Integration tests need a display and a download** | `npm run test:integration` fetches VS Code (cached in `.vscode-test/`) and runs Electron; headless CI needs `xvfb-run`. Kept out of `npm run check` so that stays fast and offline | Nothing; this is the cost of testing inside a real editor |
-| **Dev-only advisories from `@vscode/test-cli`** | Its bundled mocha pulls vulnerable `diff` and `serialize-javascript`. They run only on a developer's machine and reach no artifact; the production audit in CI is `--omit=dev` and stays clean | Upstream, or drop the runner if it stops being maintained |
 | Constant resolution is not scope-aware | A name reassigned in any scope disqualifies it everywhere in the file — deliberately blunt, erring unresolved | Demand-driven |
 | No cross-file constant resolution | A key exported from another module stays unresolved | Demand-driven; correctness prefers the miss |
 | Unsupported-platform list is a fixed set of markers | A platform not on the list is still invisible | Demand-driven |
@@ -2145,5 +2261,4 @@ Maintained as the project progresses. Rows are removed when the slice that addre
 | Programmatic `FeatureManager` registration unsupported | Flags registered in code rather than declared are invisible | Demand-driven |
 | Severity map not configurable | Every rule has a fixed severity | Demand-driven |
 | Policy is repository-wide | No per-directory or per-team override | Demand-driven |
-| Kotlin model generation is unproven | The schema is designed for it but no Kotlin generator has been run against it | The IntelliJ frontend slice |
 | TypeScript pinned `<6.1.0` | Cannot adopt TypeScript 7 until typescript-eslint widens its peer range | Revisit when typescript-eslint supports TS 7 |

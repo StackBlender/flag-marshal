@@ -94,17 +94,15 @@ describe('architecture boundaries', () => {
     expect(violations, 'frontends render wording through src/present, not the catalog').toEqual([]);
   });
 
-  it('only the extension host imports the editor API', () => {
-    // The VS Code view model is deliberately vscode-free: that is what lets the
-    // ordinary suite cover the extension's decisions. One import of `vscode` in
-    // model.ts would move that logic somewhere only a Development Host can reach.
+  it('no frontend imports an editor API', () => {
+    // Flag Marshal is a command-line and CI tool; editor frontends were dropped
+    // by the user on 2026-10-07. Bringing one back is a decision, not a drive-by.
     const platform = new Set(['vscode', 'vscode-languageserver', 'vscode-uri']);
     const violations = frontendFiles
       .flatMap(importsOf)
       .filter((ref) => platform.has(ref.specifier))
-      .filter((ref) => !ref.from.endsWith('vscode/extension.ts'))
       .map((ref) => `${ref.from} -> ${ref.specifier}`);
 
-    expect(violations, 'the editor API belongs in extension.ts and nowhere else').toEqual([]);
+    expect(violations, 'editor frontends were dropped 2026-10-07').toEqual([]);
   });
 });

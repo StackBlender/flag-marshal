@@ -8,6 +8,6 @@
  * these three.
  */
 export { nodeFileSystem } from './node-filesystem.js';
-export { nodeGitHistory } from './node-git.js';
+export { nodeGitHistory, isShallowRepository } from './node-git.js';
 export { openGitSnapshot, SnapshotError, type GitSnapshot } from './node-git-snapshot.js';
 export { nodeBaselines } from './node-baselines.js';

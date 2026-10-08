@@ -24,9 +24,9 @@ the fixtures that fail when either creeps in.
 ## Goldens
 
 Every fixture ships an `expected.json`: the `ScanReport` the analyzer must produce
-for it. Goldens are the **cross-frontend conformance suite** — the CLI, VS Code,
-and IntelliJ all assert against the same files, which is the only cheap mechanism
-that catches three UIs drifting apart.
+for it. Goldens are the **conformance suite** — the engine and the CLI assert
+against the same files, which is the only cheap mechanism that catches detection
+drifting from its specification.
 
 Goldens are built by `npm run build:goldens`, which computes exact line and column
 positions from the fixture sources. The expectations themselves are hand-declared

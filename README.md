@@ -143,11 +143,27 @@ There are no tiers, no licence keys, and no account. `check` exits 2 on a new
 violation, so it can gate a pre-commit hook or any pipeline you already run; there
 is no dedicated CI product.
 
+## Refactor preview
+
+```sh
+flag-marshal preview checkout-v2 --on                       # the diff, nothing written
+flag-marshal preview checkout-v2 --on --format=diff | git apply
+```
+
+Resolves one flag to a fixed value in TypeScript and JavaScript, where every read
+is the whole condition of an `if` or a `?:`, directly or through a `const`.
+Anything it cannot rewrite exactly is refused with the place that blocks it,
+rather than half-done. It shows what the code does with that value, never that
+the flag is safe to remove. See
+[docs/cli.md](docs/cli.md#preview).
+
 ## Output formats
 
 ```sh
 flag-marshal scan --format=markdown   # a pull-request comment
 flag-marshal scan --format=sarif      # GitHub code scanning
+flag-marshal check --format=github    # annotations on the pull request
+flag-marshal check --format=codequality > gl-code-quality.json   # GitLab widget
 flag-marshal check --format=json      # for agents and dashboards
 flag-marshal trend                    # debt over time
 ```
@@ -155,38 +171,10 @@ flag-marshal trend                    # debt over time
 `trend` reads the committed baseline's own git history. There is no database and
 no telemetry — the record already exists in your repository.
 
-To run it in a pipeline, check out full history (`fetch-depth: 0` on GitHub) so
-age evidence exists, then run `npx @stackblender/flag-marshal check`.
-
-## Editor integration
-
-### VS Code
-
-```sh
-npm run extension:dev                 # build, then F5 to open a Development Host
-npm run package:vscode                # standalone extension in artifacts/vscode/
-npm run test:integration              # drive it inside a real VS Code
-```
-
-The Feature Flags view lists every flag with its references, debt first with the
-reasons in the hover, or by name; selecting a reference opens it. Findings appear inline and in the Problems panel. The workspace is rescanned
-750 ms after a save.
-
-The extension imports `core/api` directly — same language, so no subprocess and no
-IPC. Its entire decision surface lives in `src/frontends/vscode/model.ts`, which
-imports no editor API and is therefore covered by the ordinary test suite.
-
-### Other editors
-
-```sh
-flag-marshal serve --stdio            # long-running JSON-RPC analysis server
-```
-
-Editors need an answer while someone is typing, and paying grammar loading on every
-keystroke is hopeless. `serve --stdio` keeps one process alive and answers
-`initialize`, `flagMarshal/scan`, `shutdown` and `exit` over JSON-RPC 2.0 with
-`Content-Length` framing. It runs the same analysis the CLI runs, so an editor and
-CI cannot disagree about your flags. This is not LSP.
+To run it in a pipeline, check out full history (`fetch-depth: 0` on GitHub,
+`GIT_DEPTH: 0` on GitLab), then run `npx @stackblender/flag-marshal check
+--changed-since=auto`. [`docs/ci.md`](docs/ci.md) has copy-paste recipes for
+GitHub Actions, GitLab CI and other systems.
 
 ## Layout
 
@@ -200,9 +188,7 @@ src/
 ├── present/       Wording shared by every frontend, from the message catalog.
 └── frontends/
     ├── cli/       Command-line frontend.
-    ├── node/      Node adapters for the core's ports, shared by all frontends.
-    ├── rpc/       JSON-RPC analysis server for editors.
-    └── vscode/    View model, and the one file that imports the editor API.
+    └── node/      Node adapters for the core's ports: files, git, baselines.
 test/
 ├── architecture/  Boundary and local-only guarantees.
 ├── contract/      Schema, catalog, and generated-artifact drift.
@@ -211,15 +197,17 @@ test/
 └── process/       The real built CLI, as a subprocess.
 ```
 
-The core is shared by every frontend — CLI, CI, and later the editor plugins — which
-are thin renderers of a versioned JSON contract. See
-[`docs/design.md`](docs/design.md), "Reuse across frontends".
+Flag Marshal is a command-line and CI tool; there are no editor plugins. The core
+stays separate from the CLI anyway, because that boundary is what keeps the
+analysis testable and its output a versioned JSON contract other tools can build
+on.
 
 ## Documentation
 
 | Document | Contents |
 | --- | --- |
 | [`docs/cli.md`](docs/cli.md) | Every command, option, exit code, and configuration key |
+| [`docs/ci.md`](docs/ci.md) | Pipeline recipes: GitHub Actions, GitLab CI, anywhere else |
 | [`CHANGELOG.md`](CHANGELOG.md) | What changed in each release |
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | Development setup and the rules the build enforces |
 | [`SUPPORT.md`](SUPPORT.md) | Where to report bugs and detection problems |

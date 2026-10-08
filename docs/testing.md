@@ -44,7 +44,7 @@ feature. They scan source text, so they cannot be silenced by an inline lint dis
 - `src/core/` imports no network module (`node:https`, `undici`, `axios`, …).
 - `src/core/` calls no global network API (`fetch`, `WebSocket`, …).
 
-ESLint enforces the same boundaries for editor feedback. The tests are
+ESLint enforces the same boundaries for fast feedback. The tests are
 authoritative; if the two ever disagree, fix the lint config to match the tests.
 
 ### Verifying the guards still bite
@@ -264,6 +264,55 @@ peak memory.
 #    -> 1 test fails; a second computed key in a file would not be reported
 ```
 
+### Refactor preview
+
+`test/core/refactor-preview.test.ts` pins the rewrite: unwrapping and
+reindenting a kept block, removal with no branch to keep, `await`/`!`/parentheses,
+braces kept around block-scoped declarations, multi-line template literals left
+byte for byte, nested reads, `else if` chains, parenthesization of a kept `?:`
+branch, and every refusal. `test/frontends/preview.test.ts` covers the command,
+its exit codes, that an unknown key is never echoed, and pipes the patch through
+a real `git apply` to check the result equals the previewed files.
+
+```sh
+# U1. Drop the negation flip in locateSite          -> 2 tests fail
+# U2. Disable joinsPreviousLine                     -> 1 test fails
+# U3. Unwrap blocks that declare const/let          -> 1 test fails
+# U4. Reindent inside template literals              -> 1 test fails
+# U5. Let && conditions through                      -> 1 test fails
+# U6. Accept let as well as const bindings          -> 1 test fails
+# U7. Ignore shorthand { on } uses of a binding     -> 1 test fails
+# U8. Drop the guard on deleting a binding          -> 1 test fails
+```
+
+The final "result must parse cleanly" check in `rewriteFile` is a backstop no
+known input reaches, so no test fails when it is removed. Keep it.
+
+On 2026-10-07 every flag in js-sdk-contrib, node-server-sdk and unleash-node-sdk
+was previewed both ways with the coverage refusal switched off: 122 previews in
+5 s, all refused as `unsupported-shape`. These are SDKs and their tests, not
+applications, so they show robustness, not that the shape is common.
+
+### CI formats
+
+`test/frontends/render-ci.test.ts` covers `--format=github` and
+`--format=codequality`: 1-based positions under the checkout prefix, the
+severity mapping, workflow-command escaping (a `%`, newline, `:` or `,` in a key
+or path cannot end or split the command), a Code Quality fingerprint that survives
+code moving but separates alike findings, and that `check` and `--changed-since`
+narrow them to what would fail. `test/present/evidence.test.ts` pins the evidence
+wording those annotations carry.
+
+`test/frontends/ci-defaults.test.ts` covers `--changed-since=auto` for each CI
+system's variable, and that a push build (GitHub sets `GITHUB_BASE_REF` empty) is a
+usage error rather than a guess. It makes a real `--depth 1` clone to check that a
+shallow clone reports no history, explains a failed comparison, and warns.
+
+`test/docs/ci-recipes.test.ts` keeps `docs/ci.md` copyable: every YAML block must
+parse and every `flag-marshal` command in it must be accepted by the CLI as it is
+now. Probed 2026-10-07: an unknown format in a recipe, and a mis-indented YAML key,
+each fail it.
+
 ### Every capability, no configuration
 
 There are no tiers. `test/frontends/cli.test.ts` ("one free tool") runs `scan` in
@@ -299,74 +348,6 @@ test rather than safe code: the fixture referenced its flag from a production fi
 *and* a test file, so `flag.test-only` never fired at all. The fixture now
 references it only from a test and asserts the drift finding is genuinely raised
 before asserting that `check` ignores it.
-
-### The VS Code frontend without VS Code
-
-`test/frontends/vscode-model.test.ts` covers the extension's entire decision
-surface, because that surface is in `src/frontends/vscode/model.ts` and imports no
-`vscode` module. Everything that needs a running editor lives in the extension host
-file and is kept deliberately thin: it translates the records the model produces
-into `vscode.Diagnostic` and tree items and does nothing else. Judgement that
-creeps into the host file is judgement no test in this suite can reach, so it
-belongs in the model instead.
-
-The golden conformance block there runs over every fixture and asserts the view
-model invents no flag, loses none, and gives every finding somewhere a user can
-see it.
-
-`extension.ts` is the exception: it is the one file in the repository that cannot
-run outside an editor. `test/fakes/vscode.ts` is a fake `vscode` module, aliased in
-by `vitest.config.ts`, so `activate` runs against real fixture directories in the
-ordinary suite. It records what the extension asked the editor to do — it is not a
-simulation of VS Code, and a test that needs behaviour it does not implement should
-add that behaviour rather than work around it. A boundary test keeps `vscode` out of
-every other frontend file, because one import in `model.ts` would move testable
-logic somewhere only a Development Host can reach.
-
-`test/package/vscode-artifact.test.ts` covers the assembled extension: the bundle
-exists where the manifest says, no `import.meta` survived the CommonJS conversion,
-the editor API and grammars stayed external, and the contributed commands match the
-registered ones exactly. `npm run check` assembles the extension, so these always
-run.
-
-### Driving the extension against the corpus
-
-The extension has its own activation path, so running the CLI over the corpus does
-not prove the extension works on it. Both findings from the first such run — a
-55-second scan of `spring-boot`, and a flag with an empty name in `togglz` —
-were invisible to every fixture, which is the same lesson the corpus was built to
-record: code nobody here wrote is where the defects are.
-
-There is no automated harness for this yet; it was a stub extension host driven
-over each repository. If it becomes routine, it belongs in `scripts/`.
-
-## Integration tests: a real VS Code
-
-`npm run test:integration` builds the extension, bundles `test/integration/` to
-CommonJS, downloads VS Code, installs the assembled extension into it, and drives
-the editor. The download is cached in `.vscode-test/`, so the first run takes a
-couple of minutes and later ones take seconds.
-
-It is **not** part of `npm run check`, which must stay fast and offline.
-
-These tests are deliberately few, and none of them tests a decision. Everything
-decidable lives in `model.ts` and is covered by the fake-editor tests above, which
-run in milliseconds. What is here is only what a fake cannot answer: that the
-extension is loadable at all, that the manifest names a file that exists, that the
-CommonJS bundle can be `require`d, that a command contributed in the manifest is
-really registered, and that the API calls are ones the real implementation
-accepts. A fake says yes to everything you build it to say yes to.
-
-The workspace they open is `fixtures/java-spring-conditional`, the fixture that
-produces both flags and a finding. Pointed at a fixture with a clean bill of
-health, a completely broken diagnostic path would pass silently — which is exactly
-what happened on the first run, against `ts-launchdarkly`.
-
-### Verifying the integration guards still bite
-
-Change `SOURCE` in `src/frontends/vscode/extension.ts` and rerun: the three
-diagnostic tests must fail. They pass in about 700ms warm, so a suite that
-finishes suspiciously fast is not evidence of anything on its own.
 
 ### The prefilter is a silent failure mode
 
@@ -460,21 +441,6 @@ They require `dist/`, so `npm run check` builds before testing. Running
 These also scan Flag Marshal's own repository, which exercises the walker against
 a real tree with `.gitignore`, `node_modules`, `dist`, and the fixture corpus.
 
-`rpc-process.test.ts` spawns the built `serve --stdio` and speaks the framed
-protocol to it over a pipe. It asserts the same golden detection shape the CLI
-process test asserts, so the two frontends are held to one answer, and it asserts
-the process **exits** — a server that replies correctly but keeps the process alive
-is a hung editor, and no in-process test can see that.
-
-### Deadlocks fail as timeouts, not as hangs
-
-Every spawn in `rpc-process.test.ts` carries its own timeout that kills the child
-and rejects with the captured stderr. This is not defensive padding. The request
-queue that serialises scans deadlocked once by having a queued handler await the
-queue it was running in, and without a timeout the symptom is a suite that never
-finishes and reports nothing. Any new test that drives the server through a pipe
-must keep its own kill-and-reject timer.
-
 ## Conventions
 
 - Tests live in `test/`, mirroring `src/`. Files end in `.test.ts`.
@@ -516,9 +482,7 @@ at all. Collecting that evidence is part of the section 8 validation gate.
 
 `.github/workflows/ci.yml` runs `npm ci`, `npm run check`, `npm run build`, the
 installed-tarball smoke test, and a production dependency audit on every push and
-pull request. A second job runs the VS Code integration suite under `xvfb-run`,
-kept separate so a network hiccup downloading an editor does not look like a
-broken engine.
+pull request.
 
 CI checks out with `fetch-depth: 0`. Git history is analysis input — flag age and
 last-touched dates come from `git log` — so a shallow clone would silently weaken

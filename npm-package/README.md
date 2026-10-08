@@ -57,6 +57,8 @@ code-scanning tools:
 flag-marshal scan . --json --no-git
 flag-marshal scan . --format=markdown
 flag-marshal scan . --format=sarif
+flag-marshal check --format=github         # annotations on a GitHub pull request
+flag-marshal check --format=codequality    # GitLab Code Quality report
 ```
 
 The report opens with a summary (flags older than a year, never read by code,
@@ -103,6 +105,18 @@ Metadata can also sit beside the flag, in any comment syntax:
 `.flagmarshal-baseline.json` so everyone shares one baseline.
 
 Everything is free: there are no tiers, licence keys, or accounts.
+
+## Refactor preview
+
+```sh
+flag-marshal preview checkout-v2 --on                       # the diff, nothing written
+flag-marshal preview checkout-v2 --on --format=diff | git apply
+```
+
+TypeScript and JavaScript, where every read of the flag is the whole condition
+of an `if` or a `?:`, directly or through a `const`. Anything else is refused with the place that blocks it.
+A preview shows what the code does with that value, not that the flag can be
+removed.
 
 ## Custom flag helpers
 
