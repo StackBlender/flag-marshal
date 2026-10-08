@@ -54,13 +54,13 @@ one Conventional Commit message; do not create the commit.
 | Repository | **Public** `StackBlender/flag-marshal`, a new repository created 2026-09-22. The previous private repository was retired; its scrubbed history is not carried over |
 | Current phase | **One free standalone tool, decided by the user 2026-09-22.** No paid tier, no licensing, no CI product; the entitlement seam and the GitHub Action are removed and every capability runs everywhere. Open-sourcing is under consideration, not decided |
 | Last completed slice | **CI recipes** (2026-10-07), closing the "CLI and CI focus" group: `docs/ci.md`, tested. Before it the same day: CI-aware defaults, CI annotation formats, the editor frontends removed (the user's decision), M11 `preview`, `--changed-since`. All unreleased; listed in `CHANGELOG.md` |
-| **Next slice** | The user publishes 0.2.0, then tries `docs/ci.md` in a real GitHub or GitLab pipeline. Remaining candidates are under "CLI and CI focus — 2026-10-07", "What next"; the older "Next candidates" still need a decision |
+| **Next slice** | The user tries `docs/ci.md` in a real GitHub or GitLab pipeline. Remaining candidates are under "CLI and CI focus — 2026-10-07", "What next"; the older "Next candidates" still need a decision. The website's Flag Marshal docs are hand copies; moving them to `docs/site/` and the website's `docs-sources.json` would end that |
 | Tests | 621 across 39 files in `npm run check` (74 extension and editor-server tests removed 2026-10-07 with the code they covered; 26 added for CI support), a corpus check when the corpus is present (baseline updated 2026-09-22), and an installed-tarball smoke test |
 | Fixture corpus | 8 fixtures with committed goldens, all reproduced by the engine |
 | Capabilities | All free: scan, every provider, custom helpers, `check` + baseline ratchet, `trend`, JSON/Markdown/SARIF, `init`, `--changed-since` on `scan` and `check`, `preview`. No editor frontends since 2026-10-07 |
 | Paid tier | **None.** Dropped 2026-09-22 |
 | Entitlement seam | **Removed** 2026-09-22 (`src/core/entitlement/`, every gate, and their tests) |
-| Published anywhere | `@stackblender/flag-marshal` 0.1.0-0.1.2 on npm under the old proprietary terms; 0.1.3, the first MIT release, is on npm. **0.2.0 is prepared, not published** (2026-10-07): everything since 0.1.3, including removing `serve`. Publishing is the user's |
+| Published anywhere | `@stackblender/flag-marshal` 0.1.0-0.1.2 on npm under the old proprietary terms; 0.1.3, the first MIT release; **0.2.0 published by the user 2026-10-07** (everything since 0.1.3, including removing `serve`). stackblender.com/flagmarshal updated and deployed the same day (website commit `ca8fa08`) |
 | Support | Issue forms, SECURITY, SUPPORT, CONTRIBUTING, CLI reference and privacy page now live in this repository. `StackBlender/flag-marshal-support` is being retired by the user |
 | Known blockers | None |
 
@@ -185,7 +185,7 @@ change here.
 | Preview mechanics | One site at a time with a re-scan between, so nested reads resolve inside the kept branch; the result must re-parse without errors and read the flag nowhere. Kept blocks unwrap unless they declare block-scoped names; multi-line template literals are never reindented; a rewrite that could join two statements (no semicolon before the `if`, or a `?:` branch starting with `(`/`[`/... at statement start) is refused |
 | Preview contract | Hand-written types in `src/core/refactor/preview.ts`, exported from `core/api`; not yet in `schema/v1`. Promote them to the schema when an editor consumes them (M10 code actions), so the Kotlin models are generated rather than written |
 | Preview exit code | `3` means refused. Additive to the 0/1/2 contract |
-| Docs ahead of release | **2026-10-07, by the user:** the public repository may describe unreleased behaviour before it is published to npm. A version prepared but not yet published says so in this table |
+| Docs ahead of release | **2026-10-07, by the user:** the public repository may describe unreleased behaviour before it is published to npm. A version prepared but not yet published says so in the Current state table |
 | `check --changed-since` | The merge base replaces the baseline: only violations the change introduces exit 2. A baseline file is not read; `--update-baseline` with it is a usage error |
 
 ---
