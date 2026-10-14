@@ -128,6 +128,8 @@ export function describe(diagnostic: SettingsDiagnostic): string {
     : `${diagnostic.file}: ${diagnostic.path} ${diagnostic.message}`;
 }
 
+const POLICY_KEYS = ['requireOwner', 'requireExpiry', 'maxAgeDays', 'budget', 'allowlist'];
+
 function readPolicy(raw: unknown, problems: SettingsDiagnostic[]): Policy {
   if (raw === undefined || raw === null) return DEFAULT_POLICY;
   if (!isMapping(raw)) {
@@ -135,6 +137,10 @@ function readPolicy(raw: unknown, problems: SettingsDiagnostic[]): Policy {
     return DEFAULT_POLICY;
   }
   const o = raw;
+  for (const name of Object.keys(o)) {
+    if (!POLICY_KEYS.includes(name))
+      report(problems, `policy.${name}`, 'is not a known policy setting');
+  }
 
   return {
     requireOwner: readBoolean(o['requireOwner'], 'policy.requireOwner', problems),
@@ -153,9 +159,13 @@ function readFlags(raw: unknown, problems: SettingsDiagnostic[]): Record<string,
   }
 
   const out: Record<string, FlagMetadata> = {};
+  let position = 0;
   for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
+    position += 1;
+    // Flag keys are confidential, so diagnostics name the entry by position.
+    const where = `flags[entry ${position}]`;
     if (!isMapping(value)) {
-      report(problems, `flags.${key}`, 'must be a mapping');
+      report(problems, where, 'must be a mapping');
       continue;
     }
     const o = value;
@@ -163,14 +173,14 @@ function readFlags(raw: unknown, problems: SettingsDiagnostic[]): Record<string,
     // An unquoted YAML date parses as a string here (core schema), so anything
     // else present is a mistake worth naming rather than silently ignoring.
     if (o['owner'] !== undefined && o['owner'] !== null && owner === undefined) {
-      report(problems, `flags.${key}.owner`, 'must be text');
+      report(problems, `${where}.owner`, 'must be text');
     }
     const expiry = typeof o['expiry'] === 'string' ? o['expiry'].trim() : undefined;
     if (o['expiry'] !== undefined && o['expiry'] !== null && expiry === undefined) {
-      report(problems, `flags.${key}.expiry`, 'must be YYYY-MM-DD');
+      report(problems, `${where}.expiry`, 'must be YYYY-MM-DD');
     }
     if (expiry !== undefined && !isIsoDate(expiry)) {
-      report(problems, `flags.${key}.expiry`, 'must be YYYY-MM-DD');
+      report(problems, `${where}.expiry`, 'must be YYYY-MM-DD');
       out[key] = owner === undefined ? {} : { owner };
       continue;
     }

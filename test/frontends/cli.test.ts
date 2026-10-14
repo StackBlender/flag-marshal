@@ -110,6 +110,33 @@ describe('invalid settings', () => {
   });
 });
 
+describe('invalid flag metadata', () => {
+  const files = {
+    '/w/src/a.ts': LD,
+    '/w/.flagmarshal.yml': 'flags:\n  secret-launch:\n    owner: 7\n    expiry: nope\n',
+  };
+
+  it.each([['scan'], ['check'], ['check', '--update-baseline']])(
+    'never prints the flag key for %j',
+    async (...argv) => {
+      const { err } = await capture(argv.flat(), files, { baselines: memoryBaselines().store });
+      expect(err).toContain('flags[entry 1].owner');
+      expect(err).not.toContain('secret-launch');
+    },
+  );
+});
+
+describe('unknown policy settings', () => {
+  it('rejects a misspelled policy field in check', async () => {
+    const { code, err } = await capture(['check'], {
+      '/w/src/a.ts': LD,
+      '/w/.flagmarshal.yml': 'policy:\n  requireOwnr: true\n',
+    });
+    expect(code).toBe(EXIT.USAGE);
+    expect(err).toContain('policy.requireOwnr');
+  });
+});
+
 describe('cli basics', () => {
   it.each([[], ['-h'], ['--help']])('prints usage for %j', async (...argv) => {
     const { code, out } = await capture(argv.flat());

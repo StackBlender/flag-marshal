@@ -83,10 +83,15 @@ describe('settings', () => {
       '/w',
     );
     expect(diagnostics.map((d) => d.path).sort()).toEqual([
-      'flags.a.expiry',
-      'flags.a.owner',
+      'flags[entry 1].expiry',
+      'flags[entry 1].owner',
       'policy.allowlist',
     ]);
+  });
+
+  it('reports unknown policy settings', async () => {
+    const { diagnostics } = await readSettings(fsWith('policy:\n  budgt: 3\n'), '/w');
+    expect(diagnostics.map((d) => d.path)).toEqual(['policy.budgt']);
   });
 
   it('treats an empty file as no configuration', async () => {
