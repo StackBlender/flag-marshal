@@ -29,11 +29,13 @@ try {
   );
 
   const manifest = JSON.parse(await readFile(resolve(artifact, 'package.json'), 'utf8'));
-  // Every public link must resolve to the public source repository, which holds
-  // the issue forms and security reporting.
-  const links = [manifest.repository?.url, manifest.homepage, manifest.bugs?.url];
-  if (!links.every((link) => typeof link === 'string' && link.startsWith(repository))) {
-    throw new Error(`package links must point to ${repository}: ${JSON.stringify(links)}`);
+  // Source and issue links stay on GitHub; the homepage is the product page.
+  if (
+    manifest.repository?.url !== `${repository}.git` ||
+    manifest.homepage !== 'https://stackblender.com/flagmarshal' ||
+    manifest.bugs?.url !== `${repository}/issues`
+  ) {
+    throw new Error('package repository, homepage, or issue links are incorrect');
   }
   const readme = await readFile(resolve(artifact, 'README.md'), 'utf8');
   if (!readme.includes(`${repository}/issues/new/choose`)) {

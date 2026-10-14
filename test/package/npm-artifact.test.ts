@@ -71,7 +71,7 @@ describe('the public npm artifact', () => {
     expect(readme).not.toMatch(/GitHub Action|\bpaid\b|\bupgrade\b/i);
   });
 
-  it('points every public link at the public source repository', () => {
+  it('keeps source links at the public repository and uses the product homepage', () => {
     // The source and its issue tracker live in one public repository. The retired
     // support repository must never be linked: it no longer exists.
     const repository = 'https://github.com/StackBlender/flag-marshal';
@@ -81,7 +81,7 @@ describe('the public npm artifact', () => {
       bugs?: { url?: string };
     };
     expect(manifest.repository?.url).toBe(`${repository}.git`);
-    expect(manifest.homepage).toBe(`${repository}#readme`);
+    expect(manifest.homepage).toBe('https://stackblender.com/flagmarshal');
     expect(manifest.bugs?.url).toBe(`${repository}/issues`);
 
     const readme = readFileSync(resolve(ARTIFACT, 'README.md'), 'utf8');
