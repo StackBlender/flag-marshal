@@ -79,6 +79,70 @@ describe('policy evaluation', () => {
     expect(evaluate(['a'], {}, { a: { expiry: '2030-01-01' } })).toEqual([]);
   });
 
+  describe('maximum flag age', () => {
+    const aged = (days?: number): FlagRecord => ({
+      ...flag('a'),
+      evidence: days === undefined ? [] : [{ kind: 'age-since-introduced', detail: days }],
+    });
+    const run = (record: FlagRecord, policy: Partial<Policy> = { maxAgeDays: 180 }) =>
+      evaluatePolicy({
+        flags: [record],
+        policy: { ...DEFAULT_POLICY, ...policy },
+        metadata: {},
+        now: NOW,
+      });
+
+    it('reports a flag older than the limit, with its age and the limit', () => {
+      const findings = run(aged(181));
+      expect(ids(findings)).toEqual(['flag.too-old']);
+      expect(findings[0]?.confidence).toBe('high');
+      expect(findings[0]?.evidence.map((e) => e.detail)).toEqual([181, 180]);
+    });
+
+    it('accepts a flag at or under the limit', () => {
+      expect(run(aged(180))).toEqual([]);
+    });
+
+    it('is off when maxAgeDays is 0', () => {
+      expect(run(aged(9999), { maxAgeDays: 0 })).toEqual([]);
+    });
+
+    it('explains missing history without claiming the flag is old', () => {
+      const findings = run(aged());
+      expect(ids(findings)).toEqual(['flag.age-unknown']);
+      expect(findings[0]?.severity).toBe('info');
+      expect(findings[0]?.confidence).toBe('unknown');
+    });
+
+    it.each(['spring-conditional', 'properties', 'environment', 'custom'] as const)(
+      'ignores age and missing history for %s flags, which are operational switches',
+      (provider) => {
+        const base = aged(500);
+        const record = { ...base, references: base.references.map((r) => ({ ...r, provider })) };
+        expect(run(record)).toEqual([]);
+        expect(run({ ...record, evidence: [] })).toEqual([]);
+      },
+    );
+
+    it.each(['launchdarkly', 'openfeature', 'unleash', 'togglz'] as const)(
+      'applies the age limit to %s flags',
+      (provider) => {
+        const base = aged(500);
+        const record = { ...base, references: base.references.map((r) => ({ ...r, provider })) };
+        expect(ids(run(record))).toEqual(['flag.too-old']);
+      },
+    );
+
+    it('exempts allowlisted flags', () => {
+      expect(run(aged(999), { maxAgeDays: 180, allowlist: ['a'] })).toEqual([]);
+    });
+
+    it('baselines an age violation like any other', () => {
+      const findings = run(aged(500));
+      expect(applyRatchet(findings, makeBaseline(findings)).introduced).toEqual([]);
+    });
+  });
+
   it('exempts allowlisted flags entirely', () => {
     // Kill switches legitimately live forever. A tool that cannot say so gets
     // switched off.

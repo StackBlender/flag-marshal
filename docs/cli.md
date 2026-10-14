@@ -186,7 +186,7 @@ customPatterns:
 policy:
   requireOwner: true
   requireExpiry: true
-  maxAgeDays: 180             # 0 disables
+  maxAgeDays: 180             # 0 disables; needs Git history
   budget: 50                  # 0 disables
   allowlist:
     - example-kill-switch
@@ -196,6 +196,16 @@ flags:
     owner: team-example
     expiry: 2027-01-31
 ```
+
+`maxAgeDays` reports `flag.too-old` for a flag whose first appearance in Git history is
+older than the limit; it is enforced by `check` and baselined like the other policy
+rules. A flag with no history (no Git checkout, or a shallow clone) gets an
+informational `flag.age-unknown` instead. That says the age could not be checked,
+never that the flag is stale or safe to remove, and `check` does not enforce it.
+Allowlisted flags are exempt. Both rules apply only to providers that imply a
+temporary feature: LaunchDarkly, OpenFeature, Unleash and Togglz. Spring properties,
+`.properties` files, environment variables and custom helpers are often long-lived
+operational switches, so they get no age findings.
 
 Owner and expiry can also sit beside the flag, in any comment syntax:
 `// flag-marshal: example-flag owner=team-example expiry=2027-01-31`.
