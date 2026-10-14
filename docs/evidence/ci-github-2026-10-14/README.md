@@ -38,8 +38,23 @@ full-history checkout had the base, so no shallow-clone warning appeared.
   violating run this step was **skipped**, because a failed step skips the following
   ones. Found and fixed: the recipe now has `if: ${{ !cancelled() }}`; in the rerun
   ([`violating-rerun.steps.txt`](violating-rerun.steps.txt)) the step succeeded.
-  The summary's rendered page is not readable through the API, so its contents were
-  not seen on GitHub; the local test covers the Markdown output.
+  GitHub's API and the run and job pages' HTML do not expose the rendered summary,
+  so it was not read on GitHub itself. The step ran successfully and its only input
+  is the command's stdout, so this is the same command run afterwards against the
+  `violating` branch of the scratch repository (published 0.2.0, `GITHUB_BASE_REF=main`)
+  and is what the step wrote to `$GITHUB_STEP_SUMMARY`:
+  ```
+  ## Flag Marshal
+
+  Since `origin/main` (merge base `4eb7430b`): **1** added · **0** removed · **1** finding introduced · **0** resolved
+
+  **Added:** `beta-banner`
+
+  | Introduced | Flag | Confidence | Location |
+  | --- | --- | --- | --- |
+  | Flag beta-banner has no owner | `beta-banner` | high | `src/app.ts:14` |
+  ```
+  Treat how GitHub renders this Markdown as unobserved.
 - **PR comment**: none; the recipe does not post one (0 comments on PR #2).
 - **Artifacts**: none; the recipe uploads none (`actions/runs/<id>/artifacts` returns
   0 for each run). There is nothing to download or parse. The SARIF upload variant
