@@ -2138,7 +2138,7 @@ anything else to a marketplace, accounts, hosted checks. Slices, in order:
       GitHub or GitLab**, which needs the user's repositories. The recipes pin
       `@0.2`, the release that adds their options.
 
-- [x] **CI recipes verified against a real clone — 2026-10-14** (FLAG-MARSHAL-588,
+- [ ] **CI recipes validated in a real pipeline — INCOMPLETE; local-clone part done 2026-10-14** (FLAG-MARSHAL-588,
       epic E27, recommendation R3). `test/docs/ci-recipes.test.ts` now takes the
       commands from `docs/ci.md` and runs them with the built CLI in a real clone
       of a real origin (feature branch, full history, `GITHUB_BASE_REF` or
