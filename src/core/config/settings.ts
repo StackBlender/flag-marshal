@@ -33,6 +33,24 @@ export const DEFAULT_POLICY: Policy = {
   allowlist: [],
 };
 
+/** A local Unleash export to reconcile against. Read from disk, never fetched. */
+export interface UnleashExportSettings {
+  /** Path of the export, relative to the workspace root and inside it. */
+  readonly file: string;
+  /** The environment to compare against. Omitted, no environment is assumed. */
+  readonly environment?: string;
+  /**
+   * True only when the user states the export holds every flag the provider
+   * serves to this code. The default is partial: an export is usually a project
+   * or a selection, and a flag missing from it then proves nothing.
+   */
+  readonly complete: boolean;
+}
+
+export interface ProviderStateSettings {
+  readonly unleash?: UnleashExportSettings;
+}
+
 export interface Settings {
   /**
    * Methods belonging to a team's own flag helper, so a homegrown
@@ -42,12 +60,15 @@ export interface Settings {
   readonly policy: Policy;
   /** Flag metadata declared centrally, keyed by flag key. */
   readonly flags: Readonly<Record<string, FlagMetadata>>;
+  /** Offline provider snapshots, when the repository points at any. */
+  readonly providerState: ProviderStateSettings;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
   customMethods: [],
   policy: DEFAULT_POLICY,
   flags: {},
+  providerState: {},
 };
 
 /**
@@ -87,6 +108,7 @@ export async function readSettings(
       customMethods: readMethods(object['customPatterns'], problems),
       policy: readPolicy(object['policy'], problems),
       flags: readFlags(object['flags'], problems),
+      providerState: readProviderState(object['providerState'], problems),
     },
     problems,
   };
@@ -106,6 +128,47 @@ function readPolicy(raw: unknown, problems: string[]): Policy {
     maxAgeDays: readCount(o['maxAgeDays'], 'policy.maxAgeDays', problems),
     budget: readCount(o['budget'], 'policy.budget', problems),
     allowlist: readStringList(o['allowlist'], 'policy.allowlist', problems),
+  };
+}
+
+function readProviderState(raw: unknown, problems: string[]): ProviderStateSettings {
+  if (raw === undefined || raw === null) return {};
+  if (typeof raw !== 'object') {
+    problems.push(`${SETTINGS_FILE}: providerState must be a mapping`);
+    return {};
+  }
+  const unleash = (raw as Record<string, unknown>)['unleash'];
+  if (unleash === undefined || unleash === null) return {};
+  if (typeof unleash !== 'object') {
+    problems.push(`${SETTINGS_FILE}: providerState.unleash must be a mapping`);
+    return {};
+  }
+  const o = unleash as Record<string, unknown>;
+
+  const file = typeof o['export'] === 'string' ? o['export'].trim() : '';
+  // The export is a file in the repository. An absolute or parent-relative path
+  // would let a checked-in settings file make the tool read elsewhere.
+  if (
+    file === '' ||
+    file.startsWith('/') ||
+    /^[A-Za-z]:/.test(file) ||
+    /(^|[\\/])\.\.([\\/]|$)/.test(file)
+  ) {
+    problems.push(
+      `${SETTINGS_FILE}: providerState.unleash.export must be a path inside the repository`,
+    );
+    return {};
+  }
+  const environment = typeof o['environment'] === 'string' ? o['environment'].trim() : '';
+  if (o['environment'] !== undefined && environment === '') {
+    problems.push(`${SETTINGS_FILE}: providerState.unleash.environment must be a name`);
+  }
+  return {
+    unleash: {
+      file,
+      ...(environment === '' ? {} : { environment }),
+      complete: readBoolean(o['complete'], 'providerState.unleash.complete', problems),
+    },
   };
 }
 

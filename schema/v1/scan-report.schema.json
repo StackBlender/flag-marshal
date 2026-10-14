@@ -84,6 +84,10 @@
     "changes": {
       "description": "Present only when the report was asked to compare against an earlier commit (`--changed-since`). What this change does to the flag inventory, relative to the merge base of the requested ref and HEAD. Every other field still describes the whole workspace as it is now. Optional: added within contract 1.0.",
       "$ref": "#/$defs/ChangeSet"
+    },
+    "providerState": {
+      "description": "Present only when a provider export was supplied (`--unleash-export` or `providerState.unleash` in settings). What a local snapshot of the provider's state says about the flags found in code, read entirely offline. The snapshot's provenance, environment and completeness travel with it, and its entries are leads: none is a deletion verdict, none raises a policy violation, and a flag absent from a partial snapshot is never reported as missing. Optional: added within contract 1.0.",
+      "$ref": "#/$defs/ProviderState"
     }
   },
   "$defs": {
@@ -523,6 +527,120 @@
           "items": {
             "$ref": "#/$defs/FlagReference"
           }
+        }
+      }
+    },
+    "ProviderState": {
+      "title": "ProviderState",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider",
+        "status",
+        "snapshot",
+        "reconciliation"
+      ],
+      "properties": {
+        "provider": {
+          "description": "Which provider's export this is. Unleash is the only adapter so far.",
+          "type": "string",
+          "const": "unleash"
+        },
+        "status": {
+          "description": "`loaded`: the export was read and reconciled. `unreadable`: the file could not be read. `invalid`: it was read but is not a recognizable Unleash export. `environment-not-in-export`: the requested environment does not occur in the export, so nothing environment-specific was reconciled. Anything but `loaded` carries no reconciliation entries that depend on what failed.",
+          "type": "string",
+          "enum": [
+            "loaded",
+            "unreadable",
+            "invalid",
+            "environment-not-in-export"
+          ]
+        },
+        "snapshot": {
+          "$ref": "#/$defs/ProviderSnapshot"
+        },
+        "reconciliation": {
+          "description": "Differences between the snapshot and the code, ordered by flag key then kind.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ProviderReconciliation"
+          }
+        }
+      }
+    },
+    "ProviderSnapshot": {
+      "title": "ProviderSnapshot",
+      "description": "Where a provider snapshot came from and how far it can be trusted.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "exportedAt",
+        "environment",
+        "completeness",
+        "featureCount"
+      ],
+      "properties": {
+        "source": {
+          "description": "The export file, relative to the workspace root when it lies inside it, otherwise only its file name.",
+          "type": "string",
+          "minLength": 1
+        },
+        "exportedAt": {
+          "description": "The export's own timestamp, or null when the file carries none. Never inferred from file times.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "environment": {
+          "description": "The environment the reconciliation was done for, or null when none was chosen. Never guessed.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "completeness": {
+          "description": "`complete` only when the user declared that the export holds every flag the provider serves to this code. Otherwise `partial`, and a flag missing from the snapshot proves nothing.",
+          "type": "string",
+          "enum": [
+            "complete",
+            "partial"
+          ]
+        },
+        "featureCount": {
+          "description": "Features in the export.",
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "ProviderReconciliationKind": {
+      "title": "ProviderReconciliationKind",
+      "type": "string",
+      "enum": [
+        "in-export-not-in-code",
+        "in-code-not-in-export",
+        "marked-stale-by-provider",
+        "disabled-in-environment"
+      ]
+    },
+    "ProviderReconciliation": {
+      "title": "ProviderReconciliation",
+      "description": "One difference between a provider snapshot and the code. A lead for a person to check, never a verdict that a flag is safe to delete.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "flagKey",
+        "kind"
+      ],
+      "properties": {
+        "flagKey": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "$ref": "#/$defs/ProviderReconciliationKind"
         }
       }
     }
