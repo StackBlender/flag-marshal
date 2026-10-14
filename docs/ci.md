@@ -90,6 +90,10 @@ flag-marshal:
       codequality: gl-code-quality.json
 ```
 
+The shell redirect writes `gl-code-quality.json` in the job's working directory,
+the path `artifacts:reports:codequality` reads; `test/docs/ci-recipes.test.ts` runs
+this line as written and validates the file.
+
 In a merge request pipeline, `--changed-since=auto` uses
 `CI_MERGE_REQUEST_DIFF_BASE_SHA`, the merge base GitLab computed, which a full
 clone always contains. Code Quality fingerprints ignore line numbers, so moving
