@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { openWorkspace } from '../../src/core/api/index.js';
+import { openWorkspace, type ScanReport } from '../../src/core/api/index.js';
+import { EXIT, run } from '../../src/frontends/cli/cli.js';
 import { memoryFs } from '../fakes/memory-fs.js';
 
 const ROOT = '/repo';
@@ -148,5 +149,131 @@ describe('offline Unleash export reconciliation', () => {
     const without = await scan(files());
     const withExport = await scan(files(), { file: `${ROOT}/provider/export.json` });
     expect(withExport.findings).toEqual(without.findings);
+  });
+});
+
+describe('Unleash export options on the command line', () => {
+  const cli = async (argv: string[], fs: ReturnType<typeof files> = files()) => {
+    const out: string[] = [];
+    const err: string[] = [];
+    const code = await run(argv, {
+      fs,
+      cwd: ROOT,
+      now: 1_700_000_000,
+      out: (line) => out.push(line),
+      err: (line) => err.push(line),
+    });
+    return { code, out: out.join('\n'), err: err.join('\n') };
+  };
+  const json = async (argv: string[], fs?: ReturnType<typeof files>) => {
+    const result = await cli(['scan', '--json', '--no-git', ...argv], fs);
+    expect(result.code).toBe(EXIT.OK);
+    return JSON.parse(result.out) as ScanReport;
+  };
+
+  it('accepts both the spaced and the = forms, resolved against cwd', async () => {
+    const spaced = await json([
+      '--unleash-export',
+      'provider/export.json',
+      '--unleash-environment',
+      'production',
+    ]);
+    const joined = await json([
+      '--unleash-export=provider/export.json',
+      '--unleash-environment=production',
+    ]);
+    expect(spaced.providerState?.snapshot.source).toBe('provider/export.json');
+    expect(spaced.providerState?.snapshot.environment).toBe('production');
+    expect(joined.providerState).toEqual(spaced.providerState);
+  });
+
+  it('rejects a missing value and options that the command does not take', async () => {
+    const missing = await cli(['scan', '--unleash-export']);
+    expect(missing.code).toBe(EXIT.USAGE);
+    expect(missing.err).toContain('--unleash-export needs a value');
+
+    const empty = await cli(['scan', '--unleash-environment=']);
+    expect(empty.code).toBe(EXIT.USAGE);
+    expect(empty.err).toContain('--unleash-environment needs a value');
+
+    const onCheck = await cli(['check', '--unleash-export', 'provider/export.json']);
+    expect(onCheck.code).toBe(EXIT.USAGE);
+    expect(onCheck.err).toContain("unknown option '--unleash-export'");
+  });
+
+  it('reports provenance and leads in human output, never deletion advice', async () => {
+    const { code, out } = await cli([
+      'scan',
+      '--no-git',
+      '--unleash-export',
+      'provider/export.json',
+      '--unleash-environment',
+      'production',
+      '--unleash-complete',
+    ]);
+    expect(code).toBe(EXIT.OK);
+    expect(out).toContain('Unleash export: provider/export.json');
+    expect(out).toContain('environment: production; declared complete; 4 features');
+    expect(out).toContain('code-only: read in code, absent from the export');
+    expect(out).toContain('old-one: marked stale in Unleash');
+    expect(out).toContain('switched-off: disabled in the chosen environment');
+    expect(out).toContain('These are leads to check, not advice to delete.');
+    expect(out).not.toMatch(/safe to delete/i);
+  });
+
+  it('says when the export is partial or unreadable in human output', async () => {
+    const partial = await cli(['scan', '--no-git', '--unleash-export', 'provider/export.json']);
+    expect(partial.out).toContain('environment: none chosen; partial, so absence proves nothing');
+
+    const unreadable = await cli(['scan', '--no-git', '--unleash-export', 'missing.json']);
+    expect(unreadable.code).toBe(EXIT.OK);
+    expect(unreadable.out).toContain('the export could not be read');
+  });
+
+  it('includes the reconciliation in JSON output', async () => {
+    const report = await json(['--unleash-export', 'provider/export.json', '--unleash-complete']);
+    expect(report.providerState?.status).toBe('loaded');
+    expect(report.providerState?.snapshot.completeness).toBe('complete');
+    expect(report.providerState?.reconciliation).toContainEqual({
+      flagKey: 'code-only',
+      kind: 'in-code-not-in-export',
+    });
+  });
+
+  it('overrides settings field by field', async () => {
+    const configured = files({
+      [`${ROOT}/provider/other.json`]: JSON.stringify({ features: [{ name: 'in-both' }] }),
+      [`${ROOT}/.flagmarshal.yml`]:
+        'providerState:\n  unleash:\n    export: provider/export.json\n    environment: staging\n    complete: false\n',
+    });
+
+    const fromSettings = await json([], configured);
+    expect(fromSettings.providerState?.snapshot).toMatchObject({
+      source: 'provider/export.json',
+      environment: 'staging',
+      completeness: 'partial',
+    });
+
+    const environment = await json(['--unleash-environment', 'production'], configured);
+    expect(environment.providerState?.snapshot).toMatchObject({
+      source: 'provider/export.json',
+      environment: 'production',
+      completeness: 'partial',
+    });
+
+    const complete = await json(['--unleash-complete'], configured);
+    expect(complete.providerState?.snapshot).toMatchObject({
+      source: 'provider/export.json',
+      environment: 'staging',
+      completeness: 'complete',
+    });
+
+    const file = await json(['--unleash-export', 'provider/other.json'], configured);
+    expect(file.providerState?.snapshot).toMatchObject({
+      source: 'provider/other.json',
+      environment: 'staging',
+      completeness: 'partial',
+      featureCount: 1,
+    });
   });
 });
