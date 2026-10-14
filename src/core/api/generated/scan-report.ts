@@ -46,6 +46,7 @@ export type EvidenceKind =
   | 'branch-complexity'
   | 'declared-owner'
   | 'declared-expiry'
+  | 'max-age-days'
   | 'flag-count'
   | 'budget';
 /**
@@ -64,8 +65,15 @@ export type FindingId =
   | 'flag.missing-owner'
   | 'flag.missing-expiry'
   | 'flag.expired'
+  | 'flag.too-old'
+  | 'flag.age-unknown'
   | 'flag.budget-exceeded';
 export type Severity = 'error' | 'warning' | 'info';
+export type ProviderReconciliationKind =
+  | 'in-export-not-in-code'
+  | 'in-code-not-in-export'
+  | 'marked-stale-by-provider'
+  | 'disabled-in-environment';
 
 /**
  * The wire contract between the Flag Marshal core and every frontend. This file is the source of truth: TypeScript and Kotlin models are generated from it, never hand-written. Frontends are renderers of this payload. PRE-RELEASE CONTRACT POLICY: Flag Marshal is unpublished, so version 1.0 is still mutable — enum members may be added and shapes refined without a version bump, because no external consumer exists to break. Two rules already apply and survive first release: a field added within a version is optional, never required; and once published, any breaking change bumps the major version. Delete this paragraph at first release.
@@ -105,6 +113,7 @@ export interface ScanReport {
    */
   findings: Finding[];
   changes?: ChangeSet;
+  providerState?: ProviderState;
 }
 export interface ToolInfo {
   name: 'flag-marshal';
@@ -232,4 +241,54 @@ export interface ChangeSet {
    * Unresolved references present at the base and not now. Positions refer to the base commit.
    */
   resolvedUnresolved: FlagReference[];
+}
+/**
+ * Present only when a provider export was supplied (`--unleash-export` or `providerState.unleash` in settings). What a local snapshot of the provider's state says about the flags found in code, read entirely offline. The snapshot's provenance, environment and completeness travel with it, and its entries are leads: none is a deletion verdict, none raises a policy violation, and a flag absent from a partial snapshot is never reported as missing. Optional: added within contract 1.0.
+ */
+export interface ProviderState {
+  /**
+   * Which provider's export this is. Unleash is the only adapter so far.
+   */
+  provider: 'unleash';
+  /**
+   * `loaded`: the export was read and reconciled. `unreadable`: the file could not be read. `invalid`: it was read but is not a recognizable Unleash export. `environment-not-in-export`: the requested environment does not occur in the export, so nothing environment-specific was reconciled. Anything but `loaded` carries no reconciliation entries that depend on what failed.
+   */
+  status: 'loaded' | 'unreadable' | 'invalid' | 'environment-not-in-export';
+  snapshot: ProviderSnapshot;
+  /**
+   * Differences between the snapshot and the code, ordered by flag key then kind.
+   */
+  reconciliation: ProviderReconciliation[];
+}
+/**
+ * Where a provider snapshot came from and how far it can be trusted.
+ */
+export interface ProviderSnapshot {
+  /**
+   * The export file, relative to the workspace root when it lies inside it, otherwise only its file name.
+   */
+  source: string;
+  /**
+   * The export's own timestamp, or null when the file carries none. Never inferred from file times.
+   */
+  exportedAt: string | null;
+  /**
+   * The environment the reconciliation was done for, or null when none was chosen. Never guessed.
+   */
+  environment: string | null;
+  /**
+   * `complete` only when the user declared that the export holds every flag the provider serves to this code. Otherwise `partial`, and a flag missing from the snapshot proves nothing.
+   */
+  completeness: 'complete' | 'partial';
+  /**
+   * Features in the export.
+   */
+  featureCount: number;
+}
+/**
+ * One difference between a provider snapshot and the code. A lead for a person to check, never a verdict that a flag is safe to delete.
+ */
+export interface ProviderReconciliation {
+  flagKey: string;
+  kind: ProviderReconciliationKind;
 }

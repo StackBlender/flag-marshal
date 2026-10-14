@@ -99,6 +99,25 @@ describe('message rendering', () => {
       range,
     },
     {
+      id: 'flag.too-old',
+      flagKey: 'eta',
+      severity: 'error',
+      confidence: 'high',
+      evidence: [
+        { kind: 'age-since-introduced', detail: 500 },
+        { kind: 'max-age-days', detail: 365 },
+      ],
+      range,
+    },
+    {
+      id: 'flag.age-unknown',
+      flagKey: 'theta',
+      severity: 'info',
+      confidence: 'unknown',
+      evidence: [{ kind: 'max-age-days', detail: 365 }],
+      range,
+    },
+    {
       id: 'flag.stale',
       flagKey: 'gamma',
       severity: 'warning',

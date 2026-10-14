@@ -1,5 +1,10 @@
 import type { FileSystem } from '../api/filesystem.js';
-import type { Provider, ScanReport } from '../api/generated/scan-report.js';
+import type {
+  FlagRecord,
+  Provider,
+  ProviderState,
+  ScanReport,
+} from '../api/generated/scan-report.js';
 import { scanSources, unsupportedIn, type SourceFile } from '../detect/scan-source.js';
 import {
   findTogglzEnums,
@@ -14,6 +19,7 @@ import {
   SETTINGS_FILE,
   type FlagMetadata,
   type SettingsDiagnostic,
+  type UnleashExportSettings,
 } from '../config/settings.js';
 import { readInlineMetadata } from '../detect/metadata.js';
 import { evaluatePolicy } from '../policy/evaluate.js';
@@ -25,7 +31,7 @@ import { walk } from './walk.js';
 import { grammarFor } from '../detect/languages.js';
 import { mightContainFlags } from '../detect/provider-identity.js';
 import { unparsedLanguageOf } from '../detect/unparsed.js';
-import { collectEvidence } from '../evidence/collect.js';
+import { collectEvidence, reconcileUnleash } from '../evidence/collect.js';
 import { scoreFlag } from '../score/score.js';
 import { noGitHistory, type GitHistory } from '../api/git.js';
 import type { ScanOptions } from '../detect/scan-source.js';
@@ -43,6 +49,16 @@ export interface OpenWorkspaceOptions {
   readonly git?: GitHistory;
   /** Unix seconds treated as "now". Defaults to the wall clock. */
   readonly now?: number;
+  /**
+   * An Unleash export to reconcile against, overriding `providerState.unleash`
+   * in the settings field by field. `file` is an absolute path the frontend can
+   * read through `fs`. The export is a file; the core never fetches anything.
+   */
+  readonly unleashExport?: {
+    readonly file?: string;
+    readonly environment?: string;
+    readonly complete?: boolean;
+  };
 }
 
 /**
@@ -223,6 +239,7 @@ export function openWorkspace(options: OpenWorkspaceOptions): AnalysisSession {
     const policy = evaluatePolicy({ flags, policy: settings.policy, metadata, now });
 
     const findings = [...drift, ...policy];
+    const providerState = await readProviderState(settings.providerState.unleash, flags);
 
     const report: ScanReport = {
       schemaVersion: SCHEMA_VERSION,
@@ -239,8 +256,45 @@ export function openWorkspace(options: OpenWorkspaceOptions): AnalysisSession {
         }))
         .sort((a, b) => (a.name < b.name ? -1 : 1)),
       findings,
+      ...(providerState === undefined ? {} : { providerState }),
     };
     return { report, unparsedLanguages, scanOptions };
+  }
+
+  /**
+   * Reconciles the flags with a local Unleash export, when one is named. Reading
+   * is the only thing done with it; a failure to read is reported in the state,
+   * never thrown, so a missing export cannot cost a user the scan.
+   */
+  async function readProviderState(
+    configured: UnleashExportSettings | undefined,
+    flags: readonly FlagRecord[],
+  ): Promise<ProviderState | undefined> {
+    const override = options.unleashExport;
+    const file =
+      override?.file ?? (configured === undefined ? undefined : `${root}/${configured.file}`);
+    if (file === undefined) return undefined;
+
+    const environment = override?.environment ?? configured?.environment;
+    let text: string | undefined;
+    try {
+      text = await fs.readFile(file);
+    } catch {
+      text = undefined;
+    }
+    return reconcileUnleash(
+      {
+        // Inside the workspace the path is relative; outside it only the name is
+        // kept, so a report does not carry the machine's directory layout.
+        source: file.startsWith(`${root}/`)
+          ? file.slice(root.length + 1)
+          : (file.split(/[\\/]/).pop() ?? file),
+        text,
+        ...(environment === undefined ? {} : { environment }),
+        complete: override?.complete ?? configured?.complete ?? false,
+      },
+      flags,
+    );
   }
 }
 
