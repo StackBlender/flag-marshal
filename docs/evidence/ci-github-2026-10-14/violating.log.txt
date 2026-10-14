@@ -1,0 +1,164 @@
+flags	Set up job	﻿2026-10-14T09:13:55.4091009Z Current runner version: '2.337.0'
+flags	Set up job	2026-10-14T09:13:55.4128135Z ##[group]Runner Image Provisioner
+flags	Set up job	2026-10-14T09:13:55.4129660Z Hosted Compute Agent
+flags	Set up job	2026-10-14T09:13:55.4130756Z Version: 20261002.596
+flags	Set up job	2026-10-14T09:13:55.4132126Z Commit: c3d12f3313a95f25162a1503be624f3b0617f8c0
+flags	Set up job	2026-10-14T09:13:55.4133491Z Build Date: 2026-10-02T22:28:27Z
+flags	Set up job	2026-10-14T09:13:55.4134735Z Worker ID: {77ceaf59-d936-40e3-84bb-b81ad7349aae}
+flags	Set up job	2026-10-14T09:13:55.4135935Z Region: eastus2
+flags	Set up job	2026-10-14T09:13:55.4137111Z Cloud: Azure
+flags	Set up job	2026-10-14T09:13:55.4138126Z ##[endgroup]
+flags	Set up job	2026-10-14T09:13:55.4141818Z ##[group]Operating System
+flags	Set up job	2026-10-14T09:13:55.4142938Z Ubuntu
+flags	Set up job	2026-10-14T09:13:55.4143828Z 24.04.5
+flags	Set up job	2026-10-14T09:13:55.4144908Z LTS
+flags	Set up job	2026-10-14T09:13:55.4145920Z ##[endgroup]
+flags	Set up job	2026-10-14T09:13:55.4147007Z ##[group]Runner Image
+flags	Set up job	2026-10-14T09:13:55.4148130Z Image: ubuntu-24.04
+flags	Set up job	2026-10-14T09:13:55.4149179Z Version: 20261004.327.1
+flags	Set up job	2026-10-14T09:13:55.4151202Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261004.327/images/ubuntu/Ubuntu2404-Readme.md
+flags	Set up job	2026-10-14T09:13:55.4154610Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261004.327
+flags	Set up job	2026-10-14T09:13:55.4156403Z ##[endgroup]
+flags	Set up job	2026-10-14T09:13:55.4158426Z ##[group]GITHUB_TOKEN Permissions
+flags	Set up job	2026-10-14T09:13:55.4161794Z Contents: read
+flags	Set up job	2026-10-14T09:13:55.4162830Z Metadata: read
+flags	Set up job	2026-10-14T09:13:55.4164043Z ##[endgroup]
+flags	Set up job	2026-10-14T09:13:55.4167629Z Secret source: Actions
+flags	Set up job	2026-10-14T09:13:55.4169347Z Cache mode: write
+flags	Set up job	2026-10-14T09:13:55.4170572Z Prepare workflow directory
+flags	Set up job	2026-10-14T09:13:55.4667965Z Prepare all required actions
+flags	Set up job	2026-10-14T09:13:55.4742491Z Getting action download info
+flags	Set up job	2026-10-14T09:13:55.6600112Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+flags	Set up job	2026-10-14T09:13:55.7743213Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+flags	Set up job	2026-10-14T09:13:55.9628365Z Complete job name: flags
+flags	Run actions/checkout@v4	﻿2026-10-14T09:13:56.0409738Z ##[group]Run actions/checkout@v4
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.0410653Z with:
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.0411082Z   fetch-depth: 0
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.0411878Z   repository: StackBlender/flag-marshal-ci-check
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.0415984Z   token: ***
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.0416414Z   ssh-strict: true
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.0416847Z   ssh-user: git
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.0417291Z   persist-credentials: true
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.0417793Z   clean: true
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.0418250Z   sparse-checkout-cone-mode: true
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.0418782Z   fetch-tags: false
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.0419226Z   show-progress: true
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.0419669Z   lfs: false
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.0420077Z   submodules: false
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.0420526Z   set-safe-directory: true
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.0421035Z   allow-unsafe-pr-checkout: false
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.0422005Z ##[endgroup]
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.1423123Z Syncing repository: StackBlender/flag-marshal-ci-check
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.1425895Z ##[group]Getting Git version info
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.1427331Z Working directory is '/home/runner/work/flag-marshal-ci-check/flag-marshal-ci-check'
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.1429473Z [command]/usr/bin/git version
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.1487026Z git version 2.55.0
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.1509137Z ##[endgroup]
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.1524498Z Temporarily overriding HOME='/home/runner/work/_temp/baa110a6-f168-4d83-9d80-c95f77771aa4' before making global git config changes
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.1526987Z Adding repository directory to the temporary git global config as a safe directory
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.1532213Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/flag-marshal-ci-check/flag-marshal-ci-check
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.1600259Z Deleting the contents of '/home/runner/work/flag-marshal-ci-check/flag-marshal-ci-check'
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.1613064Z ##[group]Initializing the repository
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.1624339Z [command]/usr/bin/git init /home/runner/work/flag-marshal-ci-check/flag-marshal-ci-check
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.1767255Z hint: Using 'master' as the name for the initial branch. This default branch name
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.1769366Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.1770863Z hint: to use in all of your new repositories, which will suppress this warning,
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.1772273Z hint: call:
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.1772966Z hint:
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.1773811Z hint: 	git config --global init.defaultBranch <name>
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.1774855Z hint:
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.1775772Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.1777280Z hint: 'development'. The just-created branch can be renamed via this command:
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.1778567Z hint:
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.1779238Z hint: 	git branch -m <name>
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.1779987Z hint:
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.1781025Z hint: Disable this message with "git config set advice.defaultBranchName false"
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.1783532Z Initialized empty Git repository in /home/runner/work/flag-marshal-ci-check/flag-marshal-ci-check/.git/
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.1786887Z [command]/usr/bin/git remote add origin https://github.com/StackBlender/flag-marshal-ci-check
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.1838109Z ##[endgroup]
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.1839485Z ##[group]Disabling automatic garbage collection
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.1842073Z [command]/usr/bin/git config --local gc.auto 0
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.1874511Z ##[endgroup]
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.1875736Z ##[group]Setting up auth
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.1881319Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.1918418Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.2319875Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.2356726Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.2580158Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.2617394Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.2839181Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.2880004Z ##[endgroup]
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.2880915Z ##[group]Fetching the repository
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.2890749Z [command]/usr/bin/git -c protocol.version=2 fetch --prune --no-recurse-submodules origin +refs/heads/*:refs/remotes/origin/* +refs/tags/*:refs/tags/* +8d74e7147b3357dd3166e1dee66547eb63a18185:refs/remotes/pull/2/merge
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.6098522Z From https://github.com/StackBlender/flag-marshal-ci-check
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.6099772Z  * [new branch]      clean                                    -> origin/clean
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.6100753Z  * [new branch]      main                                     -> origin/main
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.6103056Z  * [new branch]      resolved                                 -> origin/resolved
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.6104716Z  * [new branch]      violating                                -> origin/violating
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.6106373Z  * [new ref]         8d74e7147b3357dd3166e1dee66547eb63a18185 -> pull/2/merge
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.6109962Z ##[endgroup]
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.6111231Z ##[group]Determining the checkout info
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.6112527Z ##[endgroup]
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.6113636Z [command]/usr/bin/git sparse-checkout disable
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.6205960Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.6236725Z ##[group]Checking out the ref
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.6239575Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/2/merge
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.6287474Z Note: switching to 'refs/remotes/pull/2/merge'.
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.6288352Z 
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.6289712Z You are in 'detached HEAD' state. You can look around, make experimental
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.6291152Z changes and commit them, and you can discard any commits you make in this
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.6292919Z state without impacting any branches by switching back to a branch.
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.6293690Z 
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.6294500Z If you want to create a new branch to retain commits you create, you may
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.6296210Z do so (now or later) by using -c with the switch command. Example:
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.6297323Z 
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.6297899Z   git switch -c <new-branch-name>
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.6298727Z 
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.6299205Z Or undo this operation with:
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.6299917Z 
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.6300341Z   git switch -
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.6300881Z 
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.6302030Z Turn off this advice by setting config variable advice.detachedHead to false
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.6303292Z 
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.6304619Z HEAD is now at 8d74e71 Merge f7546d7edb9780d9628e02f248038c23f475b244 into 1f7b42a5a6770db3d55647d8ee0d460aab3fd655
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.6308855Z ##[endgroup]
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.6348585Z [command]/usr/bin/git log -1 --format=%H
+flags	Run actions/checkout@v4	2026-10-14T09:13:56.6375529Z 8d74e7147b3357dd3166e1dee66547eb63a18185
+flags	Run actions/setup-node@v4	﻿2026-10-14T09:13:56.6674588Z ##[group]Run actions/setup-node@v4
+flags	Run actions/setup-node@v4	2026-10-14T09:13:56.6675275Z with:
+flags	Run actions/setup-node@v4	2026-10-14T09:13:56.6675729Z   node-version: 22
+flags	Run actions/setup-node@v4	2026-10-14T09:13:56.6676223Z   always-auth: false
+flags	Run actions/setup-node@v4	2026-10-14T09:13:56.6676716Z   check-latest: false
+flags	Run actions/setup-node@v4	2026-10-14T09:13:56.6680989Z   token: ***
+flags	Run actions/setup-node@v4	2026-10-14T09:13:56.6681644Z ##[endgroup]
+flags	Run actions/setup-node@v4	2026-10-14T09:13:56.8170375Z Found in cache @ /opt/hostedtoolcache/node/22.23.3/x64
+flags	Run actions/setup-node@v4	2026-10-14T09:13:56.8175471Z (node:2305) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+flags	Run actions/setup-node@v4	2026-10-14T09:13:56.8178214Z (Use `node --trace-deprecation ...` to show where the warning was created)
+flags	Run actions/setup-node@v4	2026-10-14T09:13:56.8180613Z ##[group]Environment details
+flags	Run actions/setup-node@v4	2026-10-14T09:13:57.2537456Z node: v22.23.3
+flags	Run actions/setup-node@v4	2026-10-14T09:13:57.2538979Z npm: 10.9.9
+flags	Run actions/setup-node@v4	2026-10-14T09:13:57.2540457Z yarn: 1.22.22
+flags	Run actions/setup-node@v4	2026-10-14T09:13:57.2544051Z ##[endgroup]
+flags	Run npx --yes @stackblender/flag-marshal@0.2 check --changed-since=auto --format=github	﻿2026-10-14T09:13:57.2756145Z ##[group]Run npx --yes @stackblender/flag-marshal@0.2 check --changed-since=auto --format=github
+flags	Run npx --yes @stackblender/flag-marshal@0.2 check --changed-since=auto --format=github	2026-10-14T09:13:57.2759310Z [36;1mnpx --yes @stackblender/flag-marshal@0.2 check --changed-since=auto --format=github[0m
+flags	Run npx --yes @stackblender/flag-marshal@0.2 check --changed-since=auto --format=github	2026-10-14T09:13:57.3052914Z shell: /usr/bin/bash -e {0}
+flags	Run npx --yes @stackblender/flag-marshal@0.2 check --changed-since=auto --format=github	2026-10-14T09:13:57.3054206Z ##[endgroup]
+flags	Run npx --yes @stackblender/flag-marshal@0.2 check --changed-since=auto --format=github	2026-10-14T09:13:59.9659868Z flag-marshal: comparing with origin/main (from GITHUB_BASE_REF)
+flags	Run npx --yes @stackblender/flag-marshal@0.2 check --changed-since=auto --format=github	2026-10-14T09:14:00.1644826Z ##[error]Flag beta-banner has no owner (confidence: high). Why: no owner is declared
+flags	Run npx --yes @stackblender/flag-marshal@0.2 check --changed-since=auto --format=github	2026-10-14T09:14:00.2120978Z ##[error]Process completed with exit code 2.
+flags	Post Run actions/checkout@v4	﻿2026-10-14T09:14:00.2289936Z Post job cleanup.
+flags	Post Run actions/checkout@v4	2026-10-14T09:14:00.3127907Z [command]/usr/bin/git version
+flags	Post Run actions/checkout@v4	2026-10-14T09:14:00.3171062Z git version 2.55.0
+flags	Post Run actions/checkout@v4	2026-10-14T09:14:00.3211019Z Temporarily overriding HOME='/home/runner/work/_temp/1aecfddb-4352-4403-ad45-a48eda01c5cd' before making global git config changes
+flags	Post Run actions/checkout@v4	2026-10-14T09:14:00.3213091Z Adding repository directory to the temporary git global config as a safe directory
+flags	Post Run actions/checkout@v4	2026-10-14T09:14:00.3216595Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/flag-marshal-ci-check/flag-marshal-ci-check
+flags	Post Run actions/checkout@v4	2026-10-14T09:14:00.3255858Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+flags	Post Run actions/checkout@v4	2026-10-14T09:14:00.3291711Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+flags	Post Run actions/checkout@v4	2026-10-14T09:14:00.3546138Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+flags	Post Run actions/checkout@v4	2026-10-14T09:14:00.3568433Z http.https://github.com/.extraheader
+flags	Post Run actions/checkout@v4	2026-10-14T09:14:00.3581301Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+flags	Post Run actions/checkout@v4	2026-10-14T09:14:00.3622807Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+flags	Post Run actions/checkout@v4	2026-10-14T09:14:00.3982805Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+flags	Post Run actions/checkout@v4	2026-10-14T09:14:00.4019668Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+flags	Complete job	﻿2026-10-14T09:14:00.4448493Z Cleaning up orphan processes
+flags	Complete job	2026-10-14T09:14:00.4755228Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
