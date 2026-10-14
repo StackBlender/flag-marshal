@@ -1,0 +1,11 @@
+flags	Run npx --yes @stackblender/flag-marshal@0.2 check --changed-since=auto --format=github	2026-10-14T09:14:00.4794936Z ##[group]Run npx --yes @stackblender/flag-marshal@0.2 check --changed-since=auto --format=github
+flags	Run npx --yes @stackblender/flag-marshal@0.2 check --changed-since=auto --format=github	2026-10-14T09:14:00.4795889Z npx --yes @stackblender/flag-marshal@0.2 check --changed-since=auto --format=github
+flags	Run npx --yes @stackblender/flag-marshal@0.2 check --changed-since=auto --format=github	2026-10-14T09:14:00.5156637Z shell: /usr/bin/bash -e {0}
+flags	Run npx --yes @stackblender/flag-marshal@0.2 check --changed-since=auto --format=github	2026-10-14T09:14:00.5157109Z ##[endgroup]
+flags	Run npx --yes @stackblender/flag-marshal@0.2 check --changed-since=auto --format=github	2026-10-14T09:14:03.8300342Z flag-marshal: comparing with origin/main (from GITHUB_BASE_REF)
+flags	Run npx --yes @stackblender/flag-marshal@0.2 check --changed-since=auto --format=github	2026-10-14T09:14:04.0562540Z 
+flags	Run npx --yes @stackblender/flag-marshal@0.2 scan --changed-since=auto --format=markdown >> "$GITHUB_STEP_SUMMARY"	2026-10-14T09:14:04.1097932Z ##[group]Run npx --yes @stackblender/flag-marshal@0.2 scan --changed-since=auto --format=markdown >> "$GITHUB_STEP_SUMMARY"
+flags	Run npx --yes @stackblender/flag-marshal@0.2 scan --changed-since=auto --format=markdown >> "$GITHUB_STEP_SUMMARY"	2026-10-14T09:14:04.1098891Z npx --yes @stackblender/flag-marshal@0.2 scan --changed-since=auto --format=markdown >> "$GITHUB_STEP_SUMMARY"
+flags	Run npx --yes @stackblender/flag-marshal@0.2 scan --changed-since=auto --format=markdown >> "$GITHUB_STEP_SUMMARY"	2026-10-14T09:14:04.1166790Z shell: /usr/bin/bash -e {0}
+flags	Run npx --yes @stackblender/flag-marshal@0.2 scan --changed-since=auto --format=markdown >> "$GITHUB_STEP_SUMMARY"	2026-10-14T09:14:04.1167073Z ##[endgroup]
+flags	Run npx --yes @stackblender/flag-marshal@0.2 scan --changed-since=auto --format=markdown >> "$GITHUB_STEP_SUMMARY"	2026-10-14T09:14:04.6718016Z flag-marshal: comparing with origin/main (from GITHUB_BASE_REF)

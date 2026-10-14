@@ -1,0 +1,12 @@
+flags	Run npx --yes @stackblender/flag-marshal@0.2 check --changed-since=auto --format=github	2026-10-14T09:15:37.6075211Z ##[group]Run npx --yes @stackblender/flag-marshal@0.2 check --changed-since=auto --format=github
+flags	Run npx --yes @stackblender/flag-marshal@0.2 check --changed-since=auto --format=github	2026-10-14T09:15:37.6077771Z npx --yes @stackblender/flag-marshal@0.2 check --changed-since=auto --format=github
+flags	Run npx --yes @stackblender/flag-marshal@0.2 check --changed-since=auto --format=github	2026-10-14T09:15:37.6247248Z shell: /usr/bin/bash -e {0}
+flags	Run npx --yes @stackblender/flag-marshal@0.2 check --changed-since=auto --format=github	2026-10-14T09:15:37.6248381Z ##[endgroup]
+flags	Run npx --yes @stackblender/flag-marshal@0.2 check --changed-since=auto --format=github	2026-10-14T09:15:40.5098638Z flag-marshal: comparing with origin/main (from GITHUB_BASE_REF)
+flags	Run npx --yes @stackblender/flag-marshal@0.2 check --changed-since=auto --format=github	2026-10-14T09:15:40.6602258Z ##[error]Flag beta-banner has no owner (confidence: high). Why: no owner is declared
+flags	Run npx --yes @stackblender/flag-marshal@0.2 check --changed-since=auto --format=github	2026-10-14T09:15:40.6875069Z ##[error]Process completed with exit code 2.
+flags	Run npx --yes @stackblender/flag-marshal@0.2 scan --changed-since=auto --format=markdown >> "$GITHUB_STEP_SUMMARY"	2026-10-14T09:15:40.6944721Z ##[group]Run npx --yes @stackblender/flag-marshal@0.2 scan --changed-since=auto --format=markdown >> "$GITHUB_STEP_SUMMARY"
+flags	Run npx --yes @stackblender/flag-marshal@0.2 scan --changed-since=auto --format=markdown >> "$GITHUB_STEP_SUMMARY"	2026-10-14T09:15:40.6945505Z npx --yes @stackblender/flag-marshal@0.2 scan --changed-since=auto --format=markdown >> "$GITHUB_STEP_SUMMARY"
+flags	Run npx --yes @stackblender/flag-marshal@0.2 scan --changed-since=auto --format=markdown >> "$GITHUB_STEP_SUMMARY"	2026-10-14T09:15:40.6990100Z shell: /usr/bin/bash -e {0}
+flags	Run npx --yes @stackblender/flag-marshal@0.2 scan --changed-since=auto --format=markdown >> "$GITHUB_STEP_SUMMARY"	2026-10-14T09:15:40.6990738Z ##[endgroup]
+flags	Run npx --yes @stackblender/flag-marshal@0.2 scan --changed-since=auto --format=markdown >> "$GITHUB_STEP_SUMMARY"	2026-10-14T09:15:41.1533578Z flag-marshal: comparing with origin/main (from GITHUB_BASE_REF)

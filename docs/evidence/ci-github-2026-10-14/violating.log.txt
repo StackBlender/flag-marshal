@@ -1,0 +1,7 @@
+flags	Run npx --yes @stackblender/flag-marshal@0.2 check --changed-since=auto --format=github	2026-10-14T09:13:57.2756145Z ##[group]Run npx --yes @stackblender/flag-marshal@0.2 check --changed-since=auto --format=github
+flags	Run npx --yes @stackblender/flag-marshal@0.2 check --changed-since=auto --format=github	2026-10-14T09:13:57.2759310Z npx --yes @stackblender/flag-marshal@0.2 check --changed-since=auto --format=github
+flags	Run npx --yes @stackblender/flag-marshal@0.2 check --changed-since=auto --format=github	2026-10-14T09:13:57.3052914Z shell: /usr/bin/bash -e {0}
+flags	Run npx --yes @stackblender/flag-marshal@0.2 check --changed-since=auto --format=github	2026-10-14T09:13:57.3054206Z ##[endgroup]
+flags	Run npx --yes @stackblender/flag-marshal@0.2 check --changed-since=auto --format=github	2026-10-14T09:13:59.9659868Z flag-marshal: comparing with origin/main (from GITHUB_BASE_REF)
+flags	Run npx --yes @stackblender/flag-marshal@0.2 check --changed-since=auto --format=github	2026-10-14T09:14:00.1644826Z ##[error]Flag beta-banner has no owner (confidence: high). Why: no owner is declared
+flags	Run npx --yes @stackblender/flag-marshal@0.2 check --changed-since=auto --format=github	2026-10-14T09:14:00.2120978Z ##[error]Process completed with exit code 2.

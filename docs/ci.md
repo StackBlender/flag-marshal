@@ -23,6 +23,34 @@ Both need **full history**. A shallow clone, the default checkout in most CI
 systems, has no merge base to compare with, and its log would make every flag look
 new. Flag Marshal treats a shallow clone as having no history and warns.
 
+Run the command from the repository root. `.flagmarshal.yml` and the baseline are
+read from the working directory, so a step with `working-directory: some/subdir`
+applies no policy and passes. Reported paths are relative to that directory, which
+is what both annotation systems expect.
+
+## What has been checked
+
+The recipes are exercised by `test/docs/ci-recipes.test.ts` against the built CLI in
+a real clone of a real origin, with each system's variables set: a change that adds
+nothing exits 0; one that adds an ownerless flag exits 2 and annotates
+`src/a.ts` at the flag's line (GitHub), or writes a Code Quality report whose
+`location.path` is `src/a.ts` to stdout (GitLab), naming `CI_MERGE_REQUEST_DIFF_BASE_SHA`
+as the comparison base; declaring the owner, or removing the flag, exits 0 again, and
+the Code Quality report is then an empty array rather than missing; a base that is not in the clone exits 1.
+
+The GitHub Actions recipe has also run on hosted runners, in the public scratch
+repository [StackBlender/flag-marshal-ci-check](https://github.com/StackBlender/flag-marshal-ci-check)
+with `@stackblender/flag-marshal@0.2` from npm: a clean pull request passed, one adding
+an ownerless flag failed with exit code 2 and an annotation on `src/app.ts` at the
+flag's line, and one declaring the owner passed. Each compared with `origin/main`,
+read from `GITHUB_BASE_REF`. The evidence, with run links and log excerpts, is in
+[`docs/evidence/ci-github-2026-10-14/`](evidence/ci-github-2026-10-14/README.md).
+That run found that the summary step is skipped when `check` fails unless it has
+`if: ${{ !cancelled() }}`, which the recipe below now has. Not yet run on hosted
+runners: the SARIF upload and **GitLab CI**, so the Code Quality widget is taken from
+GitLab's documentation. If either renders differently from this page, that is a bug
+in the recipe.
+
 ## GitHub Actions
 
 Annotations on the pull request, failing on new violations:
@@ -47,13 +75,17 @@ jobs:
 ```
 
 `--changed-since=auto` reads `GITHUB_BASE_REF`, and `--format=github` prints one
-annotation per violation on the changed lines. Annotations need no extra
-permission and no code-scanning licence.
+annotation per violation on the changed lines; on a hosted run the annotation
+appeared on the check run against the flag's file and line, and the log shows only
+the message. Annotations need no extra permission and no code-scanning licence.
+This recipe uploads no artifacts and posts no pull-request comment; the job fails
+with `Process completed with exit code 2.`
 
 A Markdown summary on the job page, alongside the annotations:
 
 ```yaml
-      - run: npx --yes @stackblender/flag-marshal@0.2 scan --changed-since=auto --format=markdown >> "$GITHUB_STEP_SUMMARY"
+      - if: ${{ !cancelled() }} # without this the summary is skipped when check fails
+        run: npx --yes @stackblender/flag-marshal@0.2 scan --changed-since=auto --format=markdown >> "$GITHUB_STEP_SUMMARY"
 ```
 
 Code scanning, if the repository has it (public repositories, or GitHub Advanced

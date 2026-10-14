@@ -54,8 +54,8 @@ one Conventional Commit message; do not create the commit.
 | Repository | **Public** `StackBlender/flag-marshal`, a new repository created 2026-09-22. The previous private repository was retired; its scrubbed history is not carried over |
 | Current phase | **One free standalone tool, decided by the user 2026-09-22.** No paid tier, no licensing, no CI product; the entitlement seam and the GitHub Action are removed and every capability runs everywhere. Open-sourcing is under consideration, not decided |
 | Last completed slice | **CI recipes** (2026-10-07), closing the "CLI and CI focus" group: `docs/ci.md`, tested. Before it the same day: CI-aware defaults, CI annotation formats, the editor frontends removed (the user's decision), M11 `preview`, `--changed-since`. All unreleased; listed in `CHANGELOG.md` |
-| **Next slice** | The user tries `docs/ci.md` in a real GitHub or GitLab pipeline. Remaining candidates are under "CLI and CI focus — 2026-10-07", "What next"; the older "Next candidates" still need a decision. The website's Flag Marshal docs are hand copies; moving them to `docs/site/` and the website's `docs-sources.json` would end that |
-| Tests | 621 across 39 files in `npm run check` (74 extension and editor-server tests removed 2026-10-07 with the code they covered; 26 added for CI support), a corpus check when the corpus is present (baseline updated 2026-09-22), and an installed-tarball smoke test |
+| **Next slice** | (Task 588: the GitHub recipe is validated on hosted runners, see `docs/evidence/ci-github-2026-10-14/`; GitLab and the SARIF upload remain unverified.) The user tries `docs/ci.md` in a real GitLab pipeline. Remaining candidates are under "CLI and CI focus — 2026-10-07", "What next"; the older "Next candidates" still need a decision. The website's Flag Marshal docs are hand copies; moving them to `docs/site/` and the website's `docs-sources.json` would end that |
+| Tests | The full suite in `npm run check` (no fixed count here, since it changes as branches merge; 74 extension and editor-server tests removed 2026-10-07 with the code they covered; 26 added for CI support), a corpus check when the corpus is present (baseline updated 2026-09-22), and an installed-tarball smoke test |
 | Fixture corpus | 8 fixtures with committed goldens, all reproduced by the engine |
 | Capabilities | All free: scan, every provider, custom helpers, `check` + baseline ratchet, `trend`, JSON/Markdown/SARIF, `init`, `--changed-since` on `scan` and `check`, `preview`. No editor frontends since 2026-10-07 |
 | Paid tier | **None.** Dropped 2026-09-22 |
@@ -2138,9 +2138,23 @@ anything else to a marketplace, accounts, hosted checks. Slices, in order:
       GitHub or GitLab**, which needs the user's repositories. The recipes pin
       `@0.2`, the release that adds their options.
 
+- [x] **CI recipes validated in a real pipeline, GitHub part — complete 2026-10-14**
+      (FLAG-MARSHAL-588). Ran the `docs/ci.md` GitHub recipe on hosted runners in the
+      public scratch repository `StackBlender/flag-marshal-ci-check` with the published
+      `@stackblender/flag-marshal@0.2`: clean PR exit 0; violating PR exit 2 with an
+      annotation on `src/app.ts` line 14; resolved PR exit 0; base
+      `origin/main` from `GITHUB_BASE_REF`. Evidence: `docs/evidence/ci-github-2026-10-14/`.
+      Finding fixed in `docs/ci.md`: the job-summary step was skipped when `check`
+      failed, so it now has `if: ${{ !cancelled() }}`. The recipe uploads no artifacts
+      and posts no PR comment. Earlier, `test/docs/ci-recipes.test.ts` runs the
+      recipe commands in a local clone of a local origin; run from the repository
+      root, because the config is read from the working directory.
+- [ ] **CI recipes validated in a real pipeline, GitLab part and SARIF upload.**
+      Not started; GitLab needs a hosted project and is deferred by the owner.
+
 **What next, after this group.** Nothing CI-side is queued. Candidates, none
 started: a pull-request comment recipe that updates one comment instead of adding
-one per push (needs a `gh` version check); running the recipes for real in a
+one per push (needs a `gh` version check); running the recipes on hosted runners in a
 throwaway public repository (needs the user); and the standalone binary, if a
 CI image without Node turns out to matter.
 

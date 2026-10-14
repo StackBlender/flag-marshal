@@ -11,3 +11,6 @@ package-lock.json
 fixtures/
 schema/
 catalog/
+
+# Captured CI evidence stays verbatim as GitHub returned it.
+docs/evidence/**/*.json
