@@ -34,8 +34,9 @@ The recipes are exercised by `test/docs/ci-recipes.test.ts` against the built CL
 a real clone of a real origin, with each system's variables set: a change that adds
 nothing exits 0; one that adds an ownerless flag exits 2 and annotates
 `src/a.ts` at the flag's line (GitHub), or writes a Code Quality report whose
-`location.path` is `src/a.ts` to stdout (GitLab); declaring the owner, or removing
-the flag, exits 0 again; a base that is not in the clone exits 1. They have **not**
+`location.path` is `src/a.ts` to stdout (GitLab), naming `CI_MERGE_REQUEST_DIFF_BASE_SHA`
+as the comparison base; declaring the owner, or removing the flag, exits 0 again, and
+the Code Quality report is then an empty array rather than missing; a base that is not in the clone exits 1. They have **not**
 been run on hosted GitHub or GitLab runners, so how those systems render the output
 (the annotation placement on a diff, the Code Quality widget, the job summary) is
 taken from their documentation. If one renders differently from this page, that is

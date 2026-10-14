@@ -177,6 +177,7 @@ describe('docs/ci.md in a real clone', () => {
       CI_MERGE_REQUEST_DIFF_BASE_SHA: base,
     });
     expect(gitlab.status).toBe(EXIT.POLICY);
+    expect(gitlab.stderr).toContain('CI_MERGE_REQUEST_DIFF_BASE_SHA');
     // The recipe redirects stdout into gl-code-quality.json; stderr stays out of it.
     const report = JSON.parse(gitlab.stdout) as {
       check_name: string;
@@ -205,6 +206,14 @@ describe('docs/ci.md in a real clone', () => {
     const resolved = pipeline(recipe(/--format=github/), github);
     expect(resolved.status).toBe(EXIT.OK);
     expect(resolved.stdout).not.toContain('::error');
+
+    // GitLab's artifact is still written when clean: an empty report, not a missing file.
+    const base = git('merge-base', 'origin/main', 'HEAD').trim();
+    const gitlab = pipeline(recipe(/--format=codequality/), {
+      CI_MERGE_REQUEST_DIFF_BASE_SHA: base,
+    });
+    expect(gitlab.status).toBe(EXIT.OK);
+    expect(JSON.parse(gitlab.stdout)).toEqual([]);
 
     git('checkout', '-q', 'main');
     git('checkout', '-q', '-b', 'removal');
