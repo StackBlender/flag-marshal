@@ -34,6 +34,9 @@ flag-marshal scan [path]
 | `--format=codequality` | GitLab Code Quality JSON, for the merge request widget |
 | `--no-git` | Skip repository history. Output becomes fully deterministic, but flag-age evidence is unavailable |
 | `--changed-since <ref>` | Report only what changed since `<ref>`; see below |
+| `--unleash-export <file>` | Reconcile with a local Unleash export; see below |
+| `--unleash-environment <name>` | The Unleash environment to compare; never assumed |
+| `--unleash-complete` | Declare that the export holds every flag this code uses |
 
 `scan` always exits with code 0, even when it reports findings.
 
@@ -80,6 +83,36 @@ example `fetch-depth: 0` with `actions/checkout`, or `GIT_DEPTH: 0` on GitLab). 
 shallow clone is treated as having no history, because its log stops at the
 clone's boundary and every flag would look new. Confidence drops as it does with
 `--no-git`, and a warning on stderr says how to fix it.
+
+### Reconciling with an Unleash export
+
+```sh
+flag-marshal scan --unleash-export unleash-export.json --unleash-environment production
+```
+
+Adds provider state without a network call. Export the features from Unleash
+yourself (JSON or YAML) and point `scan` at the file. Flag Marshal only reads it.
+The same can live in `.flagmarshal.yml`; command-line options win field by field:
+
+```yaml
+providerState:
+  unleash:
+    export: ops/unleash-export.json # inside the repository
+    environment: production
+    complete: false # true only if the export holds every flag this code uses
+```
+
+The report gains a `providerState` section (also in `--format=json`) that states the
+snapshot's source, its own `exportedAt` timestamp if it has one, the environment, and
+whether it is `complete` or `partial`. Entries are `in-export-not-in-code`,
+`marked-stale-by-provider`, `disabled-in-environment`, and `in-code-not-in-export`.
+The last is reported only for a snapshot declared complete, because an export is
+usually a project or a selection and a flag missing from it then proves nothing.
+Without an environment, none is assumed and no environment-specific entry appears.
+
+These are leads, not verdicts. They add no findings, never mark a flag safe to delete,
+and never change what `check` enforces. An unreadable or unrecognizable export is
+reported in `providerState.status` and does not fail the scan.
 
 ## `init`
 
@@ -186,7 +219,7 @@ customPatterns:
 policy:
   requireOwner: true
   requireExpiry: true
-  maxAgeDays: 180             # 0 disables
+  maxAgeDays: 180             # 0 disables; needs Git history
   budget: 50                  # 0 disables
   allowlist:
     - example-kill-switch
@@ -196,6 +229,16 @@ flags:
     owner: team-example
     expiry: 2027-01-31
 ```
+
+`maxAgeDays` reports `flag.too-old` for a flag whose first appearance in Git history is
+older than the limit; it is enforced by `check` and baselined like the other policy
+rules. A flag with no history (no Git checkout, or a shallow clone) gets an
+informational `flag.age-unknown` instead. That says the age could not be checked,
+never that the flag is stale or safe to remove, and `check` does not enforce it.
+Allowlisted flags are exempt. Both rules apply only to providers that imply a
+temporary feature: LaunchDarkly, OpenFeature, Unleash and Togglz. Spring properties,
+`.properties` files, environment variables and custom helpers are often long-lived
+operational switches, so they get no age findings.
 
 Owner and expiry can also sit beside the flag, in any comment syntax:
 `// flag-marshal: example-flag owner=team-example expiry=2027-01-31`.

@@ -2138,18 +2138,19 @@ anything else to a marketplace, accounts, hosted checks. Slices, in order:
       GitHub or GitLab**, which needs the user's repositories. The recipes pin
       `@0.2`, the release that adds their options.
 
-- [ ] **CI recipes validated in a real pipeline — INCOMPLETE; local-clone part done 2026-10-14** (FLAG-MARSHAL-588,
-      epic E27, recommendation R3). `test/docs/ci-recipes.test.ts` now takes the
-      commands from `docs/ci.md` and runs them with the built CLI in a real clone
-      of a real origin (feature branch, full history, `GITHUB_BASE_REF` or
-      `CI_MERGE_REQUEST_DIFF_BASE_SHA` set), for clean, violating and resolved
-      changes plus a flag-removal change: exit 0, 2, 0, 0; GitHub annotation and
-      Code Quality path/line asserted as relative to the root; a missing base exits
-      1. Finding, now documented: run from the repository root, because the config
-      is read from the working directory and a subdirectory step silently applies
-      no policy. **Still not run on hosted GitHub or GitLab runners** (the
-      annotation placement, Code Quality widget and job summary rendering), which
-      needs the user's repositories; `docs/ci.md` says so.
+- [x] **CI recipes validated in a real pipeline, GitHub part — complete 2026-10-14**
+      (FLAG-MARSHAL-588). Ran the `docs/ci.md` GitHub recipe on hosted runners in the
+      public scratch repository `StackBlender/flag-marshal-ci-check` with the published
+      `@stackblender/flag-marshal@0.2`: clean PR exit 0; violating PR exit 2 with an
+      annotation on `src/app.ts` line 14; resolved PR exit 0; base
+      `origin/main` from `GITHUB_BASE_REF`. Evidence: `docs/evidence/ci-github-2026-10-14/`.
+      Finding fixed in `docs/ci.md`: the job-summary step was skipped when `check`
+      failed, so it now has `if: ${{ !cancelled() }}`. The recipe uploads no artifacts
+      and posts no PR comment. Earlier, `test/docs/ci-recipes.test.ts` runs the
+      recipe commands in a local clone of a local origin; run from the repository
+      root, because the config is read from the working directory.
+- [ ] **CI recipes validated in a real pipeline, GitLab part and SARIF upload.**
+      Not started; GitLab needs a hosted project and is deferred by the owner.
 
 **What next, after this group.** Nothing CI-side is queued. Candidates, none
 started: a pull-request comment recipe that updates one comment instead of adding

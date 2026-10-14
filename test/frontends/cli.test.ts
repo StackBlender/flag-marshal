@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { CORE_VERSION, type DirectoryEntry, type FileSystem } from '../../src/core/api/index.js';
+import {
+  CORE_VERSION,
+  noGitHistory,
+  type DirectoryEntry,
+  type FileSystem,
+  type GitHistory,
+} from '../../src/core/api/index.js';
 import { EXIT, run } from '../../src/frontends/cli/cli.js';
 import type { Baselines } from '../../src/core/api/index.js';
 import { type Baseline } from '../../src/core/api/index.js';
@@ -64,7 +70,7 @@ function memoryBaselines(initial?: Baseline) {
 async function capture(
   argv: readonly string[],
   files: Record<string, string> = {},
-  options: { baselines?: Baselines; now?: number } = {},
+  options: { baselines?: Baselines; now?: number; git?: GitHistory } = {},
 ): Promise<{ code: number; out: string; err: string }> {
   const out: string[] = [];
   const err: string[] = [];
@@ -75,6 +81,7 @@ async function capture(
     err: (line) => err.push(line),
     ...(options.baselines === undefined ? {} : { baselines: options.baselines }),
     ...(options.now === undefined ? {} : { now: options.now }),
+    ...(options.git === undefined ? {} : { git: () => options.git as GitHistory }),
   });
   return { code, out: out.join('\n'), err: err.join('\n') };
 }
@@ -354,5 +361,68 @@ describe('one free tool', () => {
       '/w/src/a.ts': "Features.isFeatureOn('homegrown');",
     });
     expect(out).toContain('homegrown');
+  });
+});
+
+describe('check: maximum flag age', () => {
+  const NOW = Date.parse('2026-06-01T00:00:00Z') / 1000;
+  const DAY = 86_400;
+  const old: GitHistory = {
+    ...noGitHistory,
+    isAvailable: () => Promise.resolve(true),
+    historyOf: () => Promise.resolve({ firstSeen: NOW - 500 * DAY, lastChanged: NOW - 500 * DAY }),
+  };
+  const config = '/w/.flagmarshal.yml';
+  const policy = 'policy:\n  maxAgeDays: 180\n';
+  const ld = { [config]: policy, '/w/src/a.ts': LD + "c.variation('old-flag', u, false);" };
+  const spring = {
+    [config]: policy,
+    '/w/src/A.java':
+      'import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;\n' +
+      '@ConditionalOnProperty("queue.listener.enabled")\nclass A {}\n',
+  };
+
+  it('enforces the limit on a provider that implies temporary intent', async () => {
+    const { code, out } = await capture(['check'], ld, {
+      baselines: memoryBaselines().store,
+      now: NOW,
+      git: old,
+    });
+    expect(code).toBe(EXIT.POLICY);
+    expect(out).toContain('old-flag');
+  });
+
+  it('accepts an age violation once baselined', async () => {
+    const baselines = memoryBaselines();
+    await capture(['check', '--update-baseline'], ld, {
+      baselines: baselines.store,
+      now: NOW,
+      git: old,
+    });
+    expect(baselines.current()?.accepted).toContain('flag.too-old:old-flag');
+    const { code } = await capture(['check'], ld, {
+      baselines: baselines.store,
+      now: NOW,
+      git: old,
+    });
+    expect(code).toBe(EXIT.OK);
+  });
+
+  it('does not enforce unknown age', async () => {
+    const { code } = await capture(['check'], ld, {
+      baselines: memoryBaselines().store,
+      now: NOW,
+    });
+    expect(code).toBe(EXIT.OK);
+  });
+
+  it('never reports a Spring operational switch as too old', async () => {
+    const { code, out } = await capture(['check'], spring, {
+      baselines: memoryBaselines().store,
+      now: NOW,
+      git: old,
+    });
+    expect(code).toBe(EXIT.OK);
+    expect(out).not.toContain('queue.listener.enabled');
   });
 });
