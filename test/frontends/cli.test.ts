@@ -117,6 +117,30 @@ describe('invalid settings', () => {
   });
 });
 
+describe('invalid Unleash export settings', () => {
+  const files = {
+    '/w/src/a.ts': LD + "client.variation('checkout', u, false);\n",
+    '/w/.flagmarshal.yml': 'providerState:\n  unleash:\n    export: exports/unleash.json\n',
+  };
+  const diagnostic =
+    'flag-marshal: .flagmarshal.yml: providerState.unleash.export must name a readable file inside the repository';
+
+  it('refuses check but still emits a scan report with the same diagnostic', async () => {
+    const check = await capture(['check'], files);
+    expect(check.code).toBe(EXIT.USAGE);
+    expect(check.err).toContain(diagnostic);
+    expect(check.err).toContain('policy was not enforced');
+    expect(check.out).toBe('');
+
+    const scan = await capture(['scan', '--json'], files);
+    expect(scan.code).toBe(EXIT.OK);
+    expect(scan.err).toContain(diagnostic);
+    const report = JSON.parse(scan.out) as { schemaVersion: string; flags: unknown[] };
+    expect(report.schemaVersion).toBe('1.0');
+    expect(report.flags).toHaveLength(1);
+  });
+});
+
 describe('invalid flag metadata', () => {
   const files = {
     '/w/src/a.ts': LD,
