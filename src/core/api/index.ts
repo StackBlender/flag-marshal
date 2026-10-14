@@ -31,6 +31,10 @@ export type {
   Provider,
   ReferenceKind,
   Resolution,
+  ProviderReconciliation,
+  ProviderReconciliationKind,
+  ProviderSnapshot,
+  ProviderState,
   ScanReport,
   Severity,
   SourceRange,
@@ -70,6 +74,8 @@ export {
   type Settings,
   type Policy,
   type FlagMetadata,
+  type ProviderStateSettings,
+  type UnleashExportSettings,
 } from '../config/settings.js';
 export { readInlineMetadata } from '../detect/metadata.js';
 export {
@@ -116,9 +122,11 @@ export type { FileSystem, DirectoryEntry } from './filesystem.js';
 export { noGitHistory, type GitHistory, type KeyHistory, type FileRevision } from './git.js';
 export {
   collectEvidence,
+  reconcileUnleash,
   evidenceValue,
   evidenceFlag,
   type EvidenceContext,
+  type UnleashExportInput,
 } from '../evidence/collect.js';
 export {
   scoreFlag,

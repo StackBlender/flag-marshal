@@ -13,6 +13,7 @@ import {
   type FileSystem,
   type Finding,
   type GitHistory,
+  type ProviderState,
   type RefactorPreview,
   type ScanReport,
 } from '../../core/api/index.js';
@@ -50,6 +51,12 @@ Options:
                       scan, check: report only what changed since the merge
                       base of <ref> and HEAD, such as origin/main. "auto"
                       reads the pull request's base from the CI environment
+  --unleash-export <file>
+                      scan: reconcile flags with a local Unleash export. Read
+                      from disk only; findings are leads, never deletion verdicts
+  --unleash-environment <name>
+                      scan: the environment to compare (never assumed)
+  --unleash-complete  scan: declare the export holds every flag this code uses
   -h, --help          Show this help
   -v, --version       Show the core version
 
@@ -137,6 +144,8 @@ interface Parsed {
   readonly updateBaseline: boolean;
   /** The ref given to `--changed-since`, when comparing. */
   readonly changedSince?: string;
+  /** Local Unleash export options from the command line, resolved against cwd. */
+  readonly unleash?: { file?: string; environment?: string; complete?: boolean };
   readonly error?: string;
 }
 
@@ -151,6 +160,7 @@ function parseArgs(
   // `--changed-since <ref>` takes a value, so it is lifted out before the ref
   // could be mistaken for the path. Git users write it both ways.
   let changedSince: string | undefined;
+  const unleash: { file?: string; environment?: string; complete?: boolean } = {};
   const args: string[] = [];
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i] ?? '';
@@ -164,8 +174,22 @@ function parseArgs(
       changedSince = value;
       continue;
     }
+    const unleashOption = ['--unleash-export', '--unleash-environment'].find(
+      (name) => arg === name || arg.startsWith(`${name}=`),
+    );
+    if (unleashOption !== undefined) {
+      if (!allowed.includes(unleashOption))
+        return { ...base, error: `unknown option '${unleashOption}'` };
+      const value = arg.includes('=') ? arg.slice(arg.indexOf('=') + 1) : argv[++i];
+      if (value === undefined || value === '')
+        return { ...base, error: `${unleashOption} needs a value` };
+      if (unleashOption === '--unleash-export') unleash.file = resolve(ctx.cwd, value);
+      else unleash.environment = value;
+      continue;
+    }
     args.push(arg);
   }
+  if (args.includes('--unleash-complete')) unleash.complete = true;
 
   const positional = args.filter((a) => !a.startsWith('-'));
 
@@ -194,6 +218,7 @@ function parseArgs(
     useGit: !args.includes('--no-git'),
     updateBaseline: args.includes('--update-baseline'),
     ...(changedSince === undefined ? {} : { changedSince }),
+    ...(Object.keys(unleash).length === 0 ? {} : { unleash }),
   };
 }
 
@@ -203,6 +228,7 @@ async function analyze(parsed: Parsed, ctx: CliContext): Promise<ScanReport> {
     fs: ctx.fs,
     ...(ctx.git === undefined || !parsed.useGit ? {} : { git: ctx.git(parsed.root) }),
     ...(ctx.now === undefined ? {} : { now: ctx.now }),
+    ...(parsed.unleash === undefined ? {} : { unleashExport: parsed.unleash }),
   }).scan();
 }
 
@@ -233,7 +259,14 @@ async function analyzeChanges(
     const git = ctx.git === undefined || !parsed.useGit ? undefined : ctx.git(parsed.root);
     const now = ctx.now ?? Math.floor(Date.now() / 1000);
     const scanOf = (fs: FileSystem): Promise<ScanReport> =>
-      openWorkspace({ root: parsed.root, fs, now, ...(git === undefined ? {} : { git }) }).scan();
+      openWorkspace({
+        root: parsed.root,
+        fs,
+        now,
+        ...(git === undefined ? {} : { git }),
+        // Provider state describes the present, so only the current scan has it.
+        ...(fs === ctx.fs && parsed.unleash !== undefined ? { unleashExport: parsed.unleash } : {}),
+      }).scan();
 
     const head = await scanOf(ctx.fs);
     const base = await scanOf(snapshot.fs);
@@ -314,7 +347,14 @@ async function warnIfShallow(
 }
 
 async function scan(args: readonly string[], ctx: CliContext): Promise<number> {
-  const parsed = parseArgs('scan', args, ctx, ['--json', '--no-git', '--changed-since']);
+  const parsed = parseArgs('scan', args, ctx, [
+    '--json',
+    '--no-git',
+    '--changed-since',
+    '--unleash-export',
+    '--unleash-environment',
+    '--unleash-complete',
+  ]);
   if (parsed.error !== undefined) {
     ctx.err(`flag-marshal: ${parsed.error}`);
     return EXIT.USAGE;
@@ -411,9 +451,46 @@ function format(report: ScanReport, as: Format, prefix: string): string {
       return renderSarif(annotated);
     case 'markdown':
       return changes === undefined ? renderMarkdown(report) : renderChangesMarkdown(changes);
-    case 'human':
-      return changes === undefined ? renderScan(report) : renderChanges(changes);
+    case 'human': {
+      const body = changes === undefined ? renderScan(report) : renderChanges(changes);
+      return report.providerState === undefined
+        ? body
+        : `${body}\n\n${renderProviderState(report.providerState)}`;
+    }
   }
+}
+
+const RECONCILIATION_WORDS = {
+  'in-export-not-in-code': 'in the export, no code reads it',
+  'in-code-not-in-export': 'read in code, absent from the export',
+  'marked-stale-by-provider': 'marked stale in Unleash',
+  'disabled-in-environment': 'disabled in the chosen environment',
+} as const;
+
+/**
+ * The Unleash reconciliation, with the snapshot's provenance first. These are
+ * leads to check, so nothing here is worded as a reason to delete a flag.
+ */
+function renderProviderState(state: ProviderState): string {
+  const { snapshot } = state;
+  const lines = [
+    `Unleash export: ${snapshot.source}` +
+      (snapshot.exportedAt === null ? '' : `, exported ${snapshot.exportedAt}`),
+    `  environment: ${snapshot.environment ?? 'none chosen'}; ` +
+      `${snapshot.completeness === 'complete' ? 'declared complete' : 'partial, so absence proves nothing'}; ` +
+      `${snapshot.featureCount} ${snapshot.featureCount === 1 ? 'feature' : 'features'}`,
+  ];
+  if (state.status === 'unreadable') lines.push('  the export could not be read');
+  else if (state.status === 'invalid')
+    lines.push('  the file is not a recognizable Unleash export');
+  else if (state.status === 'environment-not-in-export')
+    lines.push('  the chosen environment does not occur in the export; nothing was reconciled');
+  else if (state.reconciliation.length === 0) lines.push('  no differences found');
+  for (const item of state.reconciliation) {
+    lines.push(`  ${item.flagKey}: ${RECONCILIATION_WORDS[item.kind]}`);
+  }
+  lines.push('  These are leads to check, not advice to delete.');
+  return lines.join('\n');
 }
 
 /**
