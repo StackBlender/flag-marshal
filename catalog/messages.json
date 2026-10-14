@@ -76,7 +76,7 @@
     "flag.too-old": {
       "rule": "Flag is older than the maximum age policy",
       "title": "Flag {key} is older than the maximum flag age",
-      "explanation": "Policy sets a maximum age for a flag, and version-control history shows this flag was introduced longer ago than that. Age is a fact about the history, not a judgement about the flag: it does not mean the flag is unused or safe to remove. Retire it, or add it to the policy allowlist if it is meant to live forever.",
+      "explanation": "Policy sets a maximum age for a flag, and version-control history shows this flag was introduced longer ago than that. Age is a fact about the history, not a judgement about the flag: it says nothing about whether the flag is still in use. Retire it, or add it to the policy allowlist if it is meant to live forever.",
       "placeholders": [
         "key"
       ]
@@ -84,7 +84,7 @@
     "flag.age-unknown": {
       "rule": "Flag age could not be determined",
       "title": "Flag {key} has no age history to check against the maximum age",
-      "explanation": "Policy sets a maximum flag age, but this scan found no version-control history for this flag, so its age cannot be checked. This is not a finding that the flag is old, stale, or safe to remove. Scan inside a Git checkout with full history (CI often clones shallow) to enable the check.",
+      "explanation": "Policy sets a maximum flag age, but this scan found no version-control history for this flag, so its age cannot be checked. This says nothing about whether the flag is old, stale, or still in use. Scan inside a Git checkout with full history (CI often clones shallow) to enable the check.",
       "placeholders": [
         "key"
       ]
