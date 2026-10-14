@@ -1,4 +1,5 @@
 import type { Finding, FlagRecord } from '../api/generated/scan-report.js';
+import { impliesTemporaryFeature } from '../detect/provider-traits.js';
 import type { FlagMetadata, Policy } from '../config/settings.js';
 
 export interface PolicyInput {
@@ -74,7 +75,10 @@ export function evaluatePolicy(input: PolicyInput): Finding[] {
       }
     }
 
-    if (policy.maxAgeDays > 0) {
+    // Age only means something for a flag someone meant to remove. A Spring or
+    // environment switch is a permanent operational control, so it is exempt.
+    const temporaryIntent = flag.references.some((ref) => impliesTemporaryFeature(ref.provider));
+    if (policy.maxAgeDays > 0 && temporaryIntent) {
       const age = flag.evidence.find((item) => item.kind === 'age-since-introduced')?.detail;
       if (typeof age !== 'number') {
         // No history is a limit of the scan, not a fact about the flag. Say so

@@ -114,6 +114,25 @@ describe('policy evaluation', () => {
       expect(findings[0]?.confidence).toBe('unknown');
     });
 
+    it.each(['spring-conditional', 'properties', 'environment', 'custom'] as const)(
+      'ignores age and missing history for %s flags, which are operational switches',
+      (provider) => {
+        const base = aged(500);
+        const record = { ...base, references: base.references.map((r) => ({ ...r, provider })) };
+        expect(run(record)).toEqual([]);
+        expect(run({ ...record, evidence: [] })).toEqual([]);
+      },
+    );
+
+    it.each(['launchdarkly', 'openfeature', 'unleash', 'togglz'] as const)(
+      'applies the age limit to %s flags',
+      (provider) => {
+        const base = aged(500);
+        const record = { ...base, references: base.references.map((r) => ({ ...r, provider })) };
+        expect(ids(run(record))).toEqual(['flag.too-old']);
+      },
+    );
+
     it('exempts allowlisted flags', () => {
       expect(run(aged(999), { maxAgeDays: 180, allowlist: ['a'] })).toEqual([]);
     });
