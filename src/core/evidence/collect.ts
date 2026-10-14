@@ -245,9 +245,9 @@ function readFeatures(parsed: unknown): Map<string, ExportedFeature> | undefined
 
   const features = new Map<string, ExportedFeature>();
   for (const entry of list as unknown[]) {
-    if (entry === null || typeof entry !== 'object') continue;
+    if (entry === null || typeof entry !== 'object' || Array.isArray(entry)) return undefined;
     const f = entry as Record<string, unknown>;
-    if (typeof f['name'] !== 'string' || f['name'] === '') continue;
+    if (typeof f['name'] !== 'string' || f['name'] === '') return undefined;
     features.set(f['name'], { stale: f['stale'] === true || f['archived'] === true });
   }
   return features;

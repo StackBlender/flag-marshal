@@ -104,6 +104,21 @@ describe('offline Unleash export reconciliation', () => {
     expect(invalid.flags.length).toBeGreaterThan(0);
   });
 
+  it('rejects an export with malformed feature rows instead of treating them as absent', async () => {
+    for (const [i, body] of [
+      '{"features":[null]}',
+      '{"features":[42]}',
+      '{"features":[[]]}',
+      '{"features":[{"name":""}]}',
+      '{"features":[{"enabled":true}]}',
+    ].entries()) {
+      const path = `${ROOT}/malformed-${i}.json`;
+      const report = await scan(files({ [path]: body }), { file: path });
+      expect(report.providerState?.status).toBe('invalid');
+      expect(report.providerState?.reconciliation).toEqual([]);
+    }
+  });
+
   it('keeps host directories out of the source of an outside export', async () => {
     const report = await scan(files({ '/elsewhere/dump.json': EXPORT }), {
       file: '/elsewhere/dump.json',
