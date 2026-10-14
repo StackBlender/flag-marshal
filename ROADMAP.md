@@ -2138,9 +2138,22 @@ anything else to a marketplace, accounts, hosted checks. Slices, in order:
       GitHub or GitLab**, which needs the user's repositories. The recipes pin
       `@0.2`, the release that adds their options.
 
+- [x] **CI recipes verified against a real clone — 2026-10-14** (FLAG-MARSHAL-588,
+      epic E27, recommendation R3). `test/docs/ci-recipes.test.ts` now takes the
+      commands from `docs/ci.md` and runs them with the built CLI in a real clone
+      of a real origin (feature branch, full history, `GITHUB_BASE_REF` or
+      `CI_MERGE_REQUEST_DIFF_BASE_SHA` set), for clean, violating and resolved
+      changes plus a flag-removal change: exit 0, 2, 0, 0; GitHub annotation and
+      Code Quality path/line asserted as relative to the root; a missing base exits
+      1. Finding, now documented: run from the repository root, because the config
+      is read from the working directory and a subdirectory step silently applies
+      no policy. **Still not run on hosted GitHub or GitLab runners** (the
+      annotation placement, Code Quality widget and job summary rendering), which
+      needs the user's repositories; `docs/ci.md` says so.
+
 **What next, after this group.** Nothing CI-side is queued. Candidates, none
 started: a pull-request comment recipe that updates one comment instead of adding
-one per push (needs a `gh` version check); running the recipes for real in a
+one per push (needs a `gh` version check); running the recipes on hosted runners in a
 throwaway public repository (needs the user); and the standalone binary, if a
 CI image without Node turns out to matter.
 

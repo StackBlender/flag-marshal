@@ -23,6 +23,24 @@ Both need **full history**. A shallow clone, the default checkout in most CI
 systems, has no merge base to compare with, and its log would make every flag look
 new. Flag Marshal treats a shallow clone as having no history and warns.
 
+Run the command from the repository root. `.flagmarshal.yml` and the baseline are
+read from the working directory, so a step with `working-directory: some/subdir`
+applies no policy and passes. Reported paths are relative to that directory, which
+is what both annotation systems expect.
+
+## What has been checked
+
+The recipes are exercised by `test/docs/ci-recipes.test.ts` against the built CLI in
+a real clone of a real origin, with each system's variables set: a change that adds
+nothing exits 0; one that adds an ownerless flag exits 2 and annotates
+`src/a.ts` at the flag's line (GitHub), or writes a Code Quality report whose
+`location.path` is `src/a.ts` to stdout (GitLab); declaring the owner, or removing
+the flag, exits 0 again; a base that is not in the clone exits 1. They have **not**
+been run on hosted GitHub or GitLab runners, so how those systems render the output
+(the annotation placement on a diff, the Code Quality widget, the job summary) is
+taken from their documentation. If one renders differently from this page, that is
+a bug in the recipe.
+
 ## GitHub Actions
 
 Annotations on the pull request, failing on new violations:
