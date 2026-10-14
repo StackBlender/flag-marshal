@@ -46,6 +46,7 @@ export type EvidenceKind =
   | 'branch-complexity'
   | 'declared-owner'
   | 'declared-expiry'
+  | 'max-age-days'
   | 'flag-count'
   | 'budget';
 /**
@@ -64,6 +65,8 @@ export type FindingId =
   | 'flag.missing-owner'
   | 'flag.missing-expiry'
   | 'flag.expired'
+  | 'flag.too-old'
+  | 'flag.age-unknown'
   | 'flag.budget-exceeded';
 export type Severity = 'error' | 'warning' | 'info';
 

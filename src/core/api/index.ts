@@ -97,6 +97,7 @@ export const POLICY_FINDING_IDS = [
   'flag.missing-owner',
   'flag.missing-expiry',
   'flag.expired',
+  'flag.too-old',
   'flag.budget-exceeded',
 ] as const;
 export { BUILT_IN_ADAPTERS, customAdapter } from '../detect/providers/index.js';

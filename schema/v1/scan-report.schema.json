@@ -273,6 +273,7 @@
         "branch-complexity",
         "declared-owner",
         "declared-expiry",
+        "max-age-days",
         "flag-count",
         "budget"
       ]
@@ -376,6 +377,8 @@
         "flag.missing-owner",
         "flag.missing-expiry",
         "flag.expired",
+        "flag.too-old",
+        "flag.age-unknown",
         "flag.budget-exceeded"
       ]
     },
