@@ -104,7 +104,17 @@ function runRecipeLine(line: string, env: Record<string, string> = {}): string {
   git('init', '-q');
   const commit = (message: string): void => {
     git('add', '.');
-    git('-c', 'user.name=t', '-c', 'user.email=t@x.invalid', 'commit', '-q', '--allow-empty', '-m', message);
+    git(
+      '-c',
+      'user.name=t',
+      '-c',
+      'user.email=t@x.invalid',
+      'commit',
+      '-q',
+      '--allow-empty',
+      '-m',
+      message,
+    );
   };
   commit('base');
   const base = git('rev-parse', 'HEAD');
@@ -185,5 +195,27 @@ describe('docs/ci.md recipes that write a file', () => {
     };
     expect(sarif.version).toBe('2.1.0');
     expect(Array.isArray(sarif.runs)).toBe(true);
+  });
+
+  it('GitHub appends the Markdown summary to the step summary file', () => {
+    const line = /run: (npx[^\n]*--format=markdown >> "\$GITHUB_STEP_SUMMARY")/.exec(DOC);
+    expect(line).not.toBeNull();
+    const dir = runRecipeLine(line?.[1] ?? '', { GITHUB_STEP_SUMMARY: 'step-summary.md' });
+    const file = join(dir, 'step-summary.md');
+    expect(existsSync(file), 'step summary was not written').toBe(true);
+    const text = readFileSync(file, 'utf8');
+    expect(text.trim().length).toBeGreaterThan(0);
+    expect(text).toMatch(/^#/m);
+  });
+
+  it('check --update-baseline writes the committed baseline file', () => {
+    const line = /^(npx --yes \S+ check --update-baseline)$/m.exec(DOC);
+    expect(line).not.toBeNull();
+    const dir = runRecipeLine(line?.[1] ?? '');
+    const file = join(dir, '.flagmarshal-baseline.json');
+    expect(existsSync(file), 'baseline was not written').toBe(true);
+    const baseline = JSON.parse(readFileSync(file, 'utf8')) as Record<string, unknown>;
+    expect(typeof baseline).toBe('object');
+    expect(Object.keys(baseline).length).toBeGreaterThan(0);
   });
 });
