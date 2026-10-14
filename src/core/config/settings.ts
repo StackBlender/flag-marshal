@@ -128,12 +128,25 @@ export async function readSettings(
   }
 
   const object = parsed as Record<string, unknown>;
-  return result({
+  const settings: Settings = {
     customMethods: readMethods(object['customPatterns'], diagnostics),
     policy: readPolicy(object['policy'], diagnostics),
     flags: readFlags(object['flags'], diagnostics),
     providerState: readProviderState(object['providerState'], diagnostics),
-  });
+  };
+  const exportFile = settings.providerState.unleash?.file;
+  if (exportFile !== undefined) {
+    try {
+      await fs.readFile(`${root}/${exportFile}`);
+    } catch {
+      report(
+        diagnostics,
+        'providerState.unleash.export',
+        'must name a readable file inside the repository',
+      );
+    }
+  }
+  return result(settings);
 }
 
 function report(diagnostics: SettingsDiagnostic[], path: string, message: string): void {

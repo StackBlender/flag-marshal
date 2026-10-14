@@ -1,13 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { readSettings, SETTINGS_FILE, type FileSystem } from '../../src/core/api/index.js';
 
-function fsWith(contents?: string): FileSystem {
+function fsWith(contents?: string, files: Record<string, string> = {}): FileSystem {
   return {
     readDirectory: () => Promise.resolve([]),
-    readFile: (path) =>
-      contents !== undefined && path === `/w/${SETTINGS_FILE}`
-        ? Promise.resolve(contents)
-        : Promise.reject(new Error('ENOENT')),
+    readFile: (path) => {
+      if (contents !== undefined && path === `/w/${SETTINGS_FILE}`)
+        return Promise.resolve(contents);
+      const file = files[path];
+      return file === undefined ? Promise.reject(new Error('ENOENT')) : Promise.resolve(file);
+    },
   };
 }
 
@@ -96,5 +98,37 @@ describe('settings', () => {
 
   it('treats an empty file as no configuration', async () => {
     expect((await readSettings(fsWith(''), '/w')).diagnostics).toEqual([]);
+  });
+
+  it('rejects an Unleash export path outside the repository', async () => {
+    const { diagnostics } = await readSettings(
+      fsWith('providerState:\n  unleash:\n    export: ../outside.json\n'),
+      '/w',
+    );
+    expect(diagnostics).toEqual([
+      {
+        file: SETTINGS_FILE,
+        path: 'providerState.unleash.export',
+        message: 'must be a path inside the repository',
+      },
+    ]);
+  });
+
+  it('reports a configured Unleash export that is missing from the repository', async () => {
+    const settings = 'providerState:\n  unleash:\n    export: exports/unleash.json\n';
+    const missing = await readSettings(fsWith(settings), '/w');
+    expect(missing.diagnostics).toEqual([
+      {
+        file: SETTINGS_FILE,
+        path: 'providerState.unleash.export',
+        message: 'must name a readable file inside the repository',
+      },
+    ]);
+
+    const present = await readSettings(
+      fsWith(settings, { '/w/exports/unleash.json': '{"features":[]}' }),
+      '/w',
+    );
+    expect(present.diagnostics).toEqual([]);
   });
 });
