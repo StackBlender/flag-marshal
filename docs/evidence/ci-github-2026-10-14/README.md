@@ -34,6 +34,8 @@ full-history checkout had the base, so no shallow-clone warning appeared.
   Clean and resolved runs have no Flag Marshal annotation (only GitHub's own Node 20
   deprecation notices). Logs: [`clean.log.txt`](clean.log.txt), [`violating.log.txt`](violating.log.txt),
   [`resolved.log.txt`](resolved.log.txt), [`violating-rerun.log.txt`](violating-rerun.log.txt).
+  These are `gh run view --log` trimmed to the Flag Marshal steps, with the BOMs and
+  ANSI colour codes removed.
 - **Job summary** (`scan --format=markdown >> $GITHUB_STEP_SUMMARY`). On the first
   violating run this step was **skipped**, because a failed step skips the following
   ones. Found and fixed: the recipe now has `if: ${{ !cancelled() }}`; in the rerun
