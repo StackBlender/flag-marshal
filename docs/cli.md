@@ -38,7 +38,10 @@ flag-marshal scan [path]
 | `--unleash-environment <name>` | The Unleash environment to compare; never assumed |
 | `--unleash-complete` | Declare that the export holds every flag this code uses |
 
-`scan` always exits with code 0, even when it reports findings.
+`scan` always exits with code 0, even when it reports findings. If
+`.flagmarshal.yml` has problems (invalid YAML, a wrongly typed setting, a bad
+expiry date), `scan` still reports but prints each problem to stderr, so the
+defaults it fell back to are visible.
 
 The `github` and `codequality` formats give paths relative to the directory the
 command runs in, which is where CI systems resolve them, so `scan services/api`
@@ -149,8 +152,12 @@ file is needed, and one that exists is not read. It cannot be combined with
 | Exit code | Meaning |
 | --- | --- |
 | 0 | No new violations |
-| 1 | Usage error |
+| 1 | Usage error, or an invalid `.flagmarshal.yml` |
 | 2 | A new policy violation |
+
+`check` and `check --update-baseline` refuse to run against an invalid
+`.flagmarshal.yml`: each problem is printed to stderr, exit is 1, and no baseline
+is written. A malformed policy must not silently disable enforcement.
 
 ## `trend`
 

@@ -57,4 +57,44 @@ describe('settings', () => {
     expect(settings.customMethods).toEqual(['good']);
     expect(problems).toHaveLength(1);
   });
+
+  it('returns structured diagnostics alongside the printable problems', async () => {
+    const { diagnostics, problems } = await readSettings(fsWith('policy:\n  budget: lots\n'), '/w');
+    expect(diagnostics).toEqual([
+      {
+        file: SETTINGS_FILE,
+        path: 'policy.budget',
+        message: 'must be a non-negative whole number',
+      },
+    ]);
+    expect(problems).toHaveLength(1);
+  });
+
+  it('reports a top-level list or scalar instead of ignoring it', async () => {
+    for (const text of ['- a\n- b\n', 'just text\n']) {
+      const { diagnostics } = await readSettings(fsWith(text), '/w');
+      expect(diagnostics).toHaveLength(1);
+    }
+  });
+
+  it('reports non-string allowlist entries and bad flag metadata', async () => {
+    const { diagnostics } = await readSettings(
+      fsWith('policy:\n  allowlist: [ok, 3]\nflags:\n  a:\n    owner: 7\n    expiry: 2026-13-01\n'),
+      '/w',
+    );
+    expect(diagnostics.map((d) => d.path).sort()).toEqual([
+      'flags[entry 1].expiry',
+      'flags[entry 1].owner',
+      'policy.allowlist',
+    ]);
+  });
+
+  it('reports unknown policy settings', async () => {
+    const { diagnostics } = await readSettings(fsWith('policy:\n  budgt: 3\n'), '/w');
+    expect(diagnostics.map((d) => d.path)).toEqual(['policy.budgt']);
+  });
+
+  it('treats an empty file as no configuration', async () => {
+    expect((await readSettings(fsWith(''), '/w')).diagnostics).toEqual([]);
+  });
 });

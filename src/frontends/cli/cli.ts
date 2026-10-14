@@ -9,6 +9,7 @@ import {
   POLICY_FINDING_IDS,
   BASELINE_PATH,
   SETTINGS_FILE,
+  describeSettingsDiagnostic as describeDiagnostic,
   type Baselines,
   type FileSystem,
   type Finding,
@@ -222,6 +223,26 @@ function parseArgs(
   };
 }
 
+/**
+ * Prints each problem in `.flagmarshal.yml` to stderr and returns how many there
+ * were. Analysis falls back to defaults for settings it could not read, so a
+ * malformed policy would otherwise pass silently.
+ */
+async function settingsProblems(parsed: Parsed, ctx: CliContext): Promise<number> {
+  const diagnostics = await openWorkspace({ root: parsed.root, fs: ctx.fs }).settingsDiagnostics();
+  for (const diagnostic of diagnostics) ctx.err(`flag-marshal: ${describeDiagnostic(diagnostic)}`);
+  return diagnostics.length;
+}
+
+/** Refuses to enforce policy from a settings file that was not fully understood. */
+async function rejectInvalidSettings(parsed: Parsed, ctx: CliContext): Promise<boolean> {
+  if ((await settingsProblems(parsed, ctx)) === 0) return false;
+  ctx.err(
+    `flag-marshal: ${SETTINGS_FILE} is invalid, so policy was not enforced. Fix it and retry.`,
+  );
+  return true;
+}
+
 async function analyze(parsed: Parsed, ctx: CliContext): Promise<ScanReport> {
   return openWorkspace({
     root: parsed.root,
@@ -366,6 +387,8 @@ async function scan(args: readonly string[], ctx: CliContext): Promise<number> {
     return EXIT.USAGE;
   }
   await warnIfShallow(based, ctx);
+  // Scanning reports rather than enforces, so invalid settings are shown, not fatal.
+  await settingsProblems(based, ctx);
 
   const report = comparing(based) ? await analyzeChanges(based, ctx) : await analyze(based, ctx);
   if (typeof report === 'string') {
@@ -531,6 +554,7 @@ async function check(args: readonly string[], ctx: CliContext): Promise<number> 
     return EXIT.USAGE;
   }
   await warnIfShallow(based, ctx);
+  if (await rejectInvalidSettings(based, ctx)) return EXIT.USAGE;
   if (comparing(based)) {
     if (based.updateBaseline) {
       ctx.err('flag-marshal: --update-baseline and --changed-since cannot be combined');
