@@ -51,54 +51,90 @@ export const DEFAULT_SETTINGS: Settings = {
 };
 
 /**
+ * One thing wrong with the settings file. Never carries a flag key's value
+ * beyond the path the user wrote, and never file contents.
+ */
+export interface SettingsDiagnostic {
+  /** Settings file the problem is in. */
+  readonly file: string;
+  /** Dotted path of the offending setting, or empty for the whole file. */
+  readonly path: string;
+  /** What is wrong, without the file name prefix. */
+  readonly message: string;
+}
+
+/**
  * Reads `.flagmarshal.yml` from the workspace root.
  *
  * A missing file is the normal case and yields defaults. A malformed one yields
- * defaults too rather than failing the scan — but unlike a missing file it is
- * worth surfacing, which `problems` reports.
+ * defaults for what could not be read rather than failing the read — but unlike
+ * a missing file it is worth surfacing. `diagnostics` is the structured list and
+ * `problems` the same list as printable lines. A caller that enforces policy must
+ * refuse to proceed when either is non-empty: the settings it got are not the
+ * settings the user wrote.
  */
 export async function readSettings(
   fs: FileSystem,
   root: string,
-): Promise<{ settings: Settings; problems: string[] }> {
+): Promise<{ settings: Settings; problems: string[]; diagnostics: SettingsDiagnostic[] }> {
+  const diagnostics: SettingsDiagnostic[] = [];
+  const result = (settings: Settings) => ({
+    settings,
+    diagnostics,
+    problems: diagnostics.map(describe),
+  });
+
   let text: string;
   try {
     text = await fs.readFile(`${root}/${SETTINGS_FILE}`);
   } catch {
-    return { settings: DEFAULT_SETTINGS, problems: [] };
+    return result(DEFAULT_SETTINGS);
   }
 
   let parsed: unknown;
   try {
     parsed = parse(text);
   } catch {
-    return { settings: DEFAULT_SETTINGS, problems: [`${SETTINGS_FILE} is not valid YAML`] };
+    report(diagnostics, '', 'is not valid YAML');
+    return result(DEFAULT_SETTINGS);
   }
 
-  if (parsed === null || typeof parsed !== 'object') {
-    return { settings: DEFAULT_SETTINGS, problems: [] };
+  // An empty file parses to null and is simply no configuration.
+  if (parsed === null || parsed === undefined) return result(DEFAULT_SETTINGS);
+  if (typeof parsed !== 'object' || Array.isArray(parsed)) {
+    report(diagnostics, '', 'must be a mapping at the top level');
+    return result(DEFAULT_SETTINGS);
   }
 
-  const problems: string[] = [];
   const object = parsed as Record<string, unknown>;
-
-  return {
-    settings: {
-      customMethods: readMethods(object['customPatterns'], problems),
-      policy: readPolicy(object['policy'], problems),
-      flags: readFlags(object['flags'], problems),
-    },
-    problems,
-  };
+  return result({
+    customMethods: readMethods(object['customPatterns'], diagnostics),
+    policy: readPolicy(object['policy'], diagnostics),
+    flags: readFlags(object['flags'], diagnostics),
+  });
 }
 
-function readPolicy(raw: unknown, problems: string[]): Policy {
+function report(diagnostics: SettingsDiagnostic[], path: string, message: string): void {
+  diagnostics.push({ file: SETTINGS_FILE, path, message });
+}
+
+const isMapping = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+/** The printable form of a diagnostic. */
+export function describe(diagnostic: SettingsDiagnostic): string {
+  return diagnostic.path === ''
+    ? `${diagnostic.file} ${diagnostic.message}`
+    : `${diagnostic.file}: ${diagnostic.path} ${diagnostic.message}`;
+}
+
+function readPolicy(raw: unknown, problems: SettingsDiagnostic[]): Policy {
   if (raw === undefined || raw === null) return DEFAULT_POLICY;
-  if (typeof raw !== 'object') {
-    problems.push(`${SETTINGS_FILE}: policy must be a mapping`);
+  if (!isMapping(raw)) {
+    report(problems, 'policy', 'must be a mapping');
     return DEFAULT_POLICY;
   }
-  const o = raw as Record<string, unknown>;
+  const o = raw;
 
   return {
     requireOwner: readBoolean(o['requireOwner'], 'policy.requireOwner', problems),
@@ -109,24 +145,32 @@ function readPolicy(raw: unknown, problems: string[]): Policy {
   };
 }
 
-function readFlags(raw: unknown, problems: string[]): Record<string, FlagMetadata> {
+function readFlags(raw: unknown, problems: SettingsDiagnostic[]): Record<string, FlagMetadata> {
   if (raw === undefined || raw === null) return {};
-  if (typeof raw !== 'object') {
-    problems.push(`${SETTINGS_FILE}: flags must be a mapping of flag key to metadata`);
+  if (!isMapping(raw)) {
+    report(problems, 'flags', 'must be a mapping of flag key to metadata');
     return {};
   }
 
   const out: Record<string, FlagMetadata> = {};
   for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
-    if (value === null || typeof value !== 'object') {
-      problems.push(`${SETTINGS_FILE}: flags.${key} must be a mapping`);
+    if (!isMapping(value)) {
+      report(problems, `flags.${key}`, 'must be a mapping');
       continue;
     }
-    const o = value as Record<string, unknown>;
+    const o = value;
     const owner = typeof o['owner'] === 'string' ? o['owner'].trim() : undefined;
+    // An unquoted YAML date parses as a string here (core schema), so anything
+    // else present is a mistake worth naming rather than silently ignoring.
+    if (o['owner'] !== undefined && o['owner'] !== null && owner === undefined) {
+      report(problems, `flags.${key}.owner`, 'must be text');
+    }
     const expiry = typeof o['expiry'] === 'string' ? o['expiry'].trim() : undefined;
+    if (o['expiry'] !== undefined && o['expiry'] !== null && expiry === undefined) {
+      report(problems, `flags.${key}.expiry`, 'must be YYYY-MM-DD');
+    }
     if (expiry !== undefined && !isIsoDate(expiry)) {
-      problems.push(`${SETTINGS_FILE}: flags.${key}.expiry must be YYYY-MM-DD`);
+      report(problems, `flags.${key}.expiry`, 'must be YYYY-MM-DD');
       out[key] = owner === undefined ? {} : { owner };
       continue;
     }
@@ -145,47 +189,49 @@ export function isIsoDate(value: string): boolean {
   return !Number.isNaN(parsed.getTime()) && parsed.toISOString().startsWith(value);
 }
 
-function readBoolean(value: unknown, name: string, problems: string[]): boolean {
+function readBoolean(value: unknown, name: string, problems: SettingsDiagnostic[]): boolean {
   if (value === undefined) return false;
   if (typeof value === 'boolean') return value;
-  problems.push(`${SETTINGS_FILE}: ${name} must be true or false`);
+  report(problems, name, 'must be true or false');
   return false;
 }
 
-function readCount(value: unknown, name: string, problems: string[]): number {
+function readCount(value: unknown, name: string, problems: SettingsDiagnostic[]): number {
   if (value === undefined) return 0;
   if (typeof value === 'number' && Number.isInteger(value) && value >= 0) return value;
-  problems.push(`${SETTINGS_FILE}: ${name} must be a non-negative whole number`);
+  report(problems, name, 'must be a non-negative whole number');
   return 0;
 }
 
-function readStringList(value: unknown, name: string, problems: string[]): string[] {
-  if (value === undefined) return [];
+function readStringList(value: unknown, name: string, problems: SettingsDiagnostic[]): string[] {
+  if (value === undefined || value === null) return [];
   if (!Array.isArray(value)) {
-    problems.push(`${SETTINGS_FILE}: ${name} must be a list`);
+    report(problems, name, 'must be a list');
     return [];
   }
-  return [...new Set(value.filter((v): v is string => typeof v === 'string'))].sort();
+  const strings = value.filter((v): v is string => typeof v === 'string');
+  if (strings.length !== value.length) report(problems, name, 'must contain only text entries');
+  return [...new Set(strings)].sort();
 }
 
-function readMethods(raw: unknown, problems: string[]): string[] {
+function readMethods(raw: unknown, problems: SettingsDiagnostic[]): string[] {
   if (raw === undefined || raw === null) return [];
-  if (typeof raw !== 'object') {
-    problems.push(`${SETTINGS_FILE}: customPatterns must be a mapping`);
+  if (!isMapping(raw)) {
+    report(problems, 'customPatterns', 'must be a mapping');
     return [];
   }
 
-  const value = (raw as { methods?: unknown }).methods;
+  const value = raw['methods'];
   if (value === undefined) return [];
   if (!Array.isArray(value)) {
-    problems.push(`${SETTINGS_FILE}: customPatterns.methods must be a list`);
+    report(problems, 'customPatterns.methods', 'must be a list');
     return [];
   }
 
   const methods: string[] = [];
   for (const entry of value) {
     if (typeof entry === 'string' && entry.trim() !== '') methods.push(entry.trim());
-    else problems.push(`${SETTINGS_FILE}: ignoring non-string entry in customPatterns.methods`);
+    else report(problems, 'customPatterns.methods', 'must contain only non-empty text entries');
   }
   // Deduplicated and sorted so output stays deterministic regardless of file order.
   return [...new Set(methods)].sort();

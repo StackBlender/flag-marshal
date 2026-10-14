@@ -9,7 +9,12 @@ import {
 } from '../detect/togglz-enums.js';
 import { isTestPath } from '../detect/test-paths.js';
 import { configKindFor, parseConfig, type ConfigEntry } from '../config/parse-config.js';
-import { readSettings, SETTINGS_FILE, type FlagMetadata } from '../config/settings.js';
+import {
+  readSettings,
+  SETTINGS_FILE,
+  type FlagMetadata,
+  type SettingsDiagnostic,
+} from '../config/settings.js';
 import { readInlineMetadata } from '../detect/metadata.js';
 import { evaluatePolicy } from '../policy/evaluate.js';
 import { customAdapter } from '../detect/providers/index.js';
@@ -53,6 +58,11 @@ export interface AnalysisSession {
   /** Inventories every flag in the workspace. */
   scan(): Promise<ScanReport>;
   /**
+   * Problems in `.flagmarshal.yml`. Analysis falls back to defaults for what it
+   * could not read, so a frontend that enforces policy must check this first.
+   */
+  settingsDiagnostics(): Promise<readonly SettingsDiagnostic[]>;
+  /**
    * A dry run of resolving one flag to a fixed value: the files as they would
    * be, or why that cannot be shown exactly. Writes nothing.
    */
@@ -87,6 +97,10 @@ export function openWorkspace(options: OpenWorkspaceOptions): AnalysisSession {
 
     async scan(): Promise<ScanReport> {
       return (await analyze()).report;
+    },
+
+    async settingsDiagnostics(): Promise<readonly SettingsDiagnostic[]> {
+      return (await readSettings(fs, root)).diagnostics;
     },
 
     async previewResolution(key: string, value: FlagValue): Promise<RefactorPreview> {

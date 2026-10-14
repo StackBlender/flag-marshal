@@ -67,6 +67,8 @@ export {
   DEFAULT_SETTINGS,
   DEFAULT_POLICY,
   isIsoDate,
+  describe as describeSettingsDiagnostic,
+  type SettingsDiagnostic,
   type Settings,
   type Policy,
   type FlagMetadata,
