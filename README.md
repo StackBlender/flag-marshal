@@ -215,7 +215,7 @@ on.
 | [`docs/privacy.md`](docs/privacy.md) | What stays on your machine |
 | [`docs/testing.md`](docs/testing.md) | How to run and debug each test layer |
 | [`docs/design.md`](docs/design.md) | Architecture and the reasoning behind it |
-| [`ROADMAP.md`](ROADMAP.md) | Current state, milestone ladder, decisions already made |
+| [`ROADMAP.md`](ROADMAP.md) | Next slices, decisions, known debt, and ideas |
 | [`AGENTS.md`](AGENTS.md) | Working rules for automated contributors |
 
 ## License

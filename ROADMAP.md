@@ -74,7 +74,6 @@ Architecture (stream, under the approved design):
 - The work merged on 2026-10-14 is unreleased and missing from `CHANGELOG.md`: npm users do not have it (Next 1).
 - The GitLab recipe and the SARIF upload have never run in a real pipeline: the Code Quality widget is taken from GitLab's documentation (Next 2).
 - The website's Flag Marshal docs are hand copies: they drift from [docs/cli.md](docs/cli.md) (Next 3).
-- [AGENTS.md](AGENTS.md) and [README.md](README.md) still describe the old roadmap (a **Current state** table, a milestone ladder to take in order): agents are told to update sections that no longer exist.
 - `HIGH` confidence is unreachable for remote SDK flags: at most two local signals exist for LaunchDarkly, OpenFeature and Unleash, so "safe to delete" can never be shown; the Unleash export adds leads, not signals.
 - No LaunchDarkly export is read: Unleash is the only provider state source.
 - The unresolved-key cap is repository-wide: one computed key anywhere caps every flag's confidence (declared helper pass-throughs excepted).

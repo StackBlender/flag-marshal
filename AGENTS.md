@@ -9,16 +9,17 @@ This repository owns its build, tests, versioning, release, and roadmap.
 ## Before making changes
 
 1. Read this file completely.
-2. Read [`ROADMAP.md`](ROADMAP.md) — current state, the next slice, and the
-   decisions already made. Its **Current state** table is the handoff.
+2. Read [`ROADMAP.md`](ROADMAP.md): the next slices, the decisions already made,
+   and the known debt. It is a plan, not a status board; work state lives in Odin
+   and git.
 3. Read [`docs/design.md`](docs/design.md) — product decision, architecture,
    monetization, and the validation gate.
 4. Read [`docs/testing.md`](docs/testing.md) before changing tests or tooling.
 5. Run `git status` and **preserve working-tree changes that are not yours**.
 6. Run `npm run check` to establish a green baseline *before* editing.
 
-Take the first unchecked milestone in `ROADMAP.md`. One slice at a time. Do not
-batch milestones and do not skip ahead.
+Take the first item in the roadmap's **Next** unless the owner says otherwise. One
+slice at a time; do not batch slices.
 
 If the user's instruction conflicts with the roadmap, follow the user and record the
 new direction in the roadmap before finishing.
@@ -30,8 +31,13 @@ private `stackblender-operations` repository owns portfolio priority, cross-prod
 decisions, and the concurrent-stream rules. Do not edit other repositories from here.
 Do not duplicate portfolio-level documents into this repository.
 
+Coordinate through Odin: when blocked on the owner, raise `status_blocker` with the
+question (never a push notification); message another agent with `msg_send`; send a
+request to another repository's owner with `directory_find`, then `queue_submit`.
+
 ## Git ownership
 
+These rules follow "Git ownership" in `stackblender-operations/AGENTS.md`.
 Read-only Git commands are allowed for inspection at any time: `git status`,
 `git diff`, `git log`, `git show`.
 
@@ -40,7 +46,7 @@ Agents commit and push their own slices without asking (owner, 2026-10-24):
 - Stage explicit paths only: never `git add -A`, `git add .` or `git commit -a`. Never stage, revert or commit changes that are not yours.
 - Never rewrite published history (no force-push, no rebasing pushed commits) and never delete branches or tags without the owner.
 
-Use one concise Conventional Commit message per slice. Publishing a release (npm, marketplaces) stays with the owner.
+Use one concise Conventional Commit message per slice, and push it: a slice is not finished until it is on the remote. Releases, publishing (npm, marketplaces) and production deployments stay with the owner.
 
 **Author identity:** this repository commits as `StackBlender
 <noreply@stackblender.invalid>`, matching the other StackBlender repositories. It is
@@ -61,8 +67,7 @@ authoritative because lint can be silenced with an inline disable comment.
   nothing deeper. Reaching into `core/detect`, `core/score`, or any other internal
   module is what makes frontends drift apart.
 - **The core emits structured issues, never human-facing strings.** Wording comes
-  from the message catalog so every frontend renders identical text. (Catalog lands
-  in Milestone 1.)
+  from the message catalog so every frontend renders identical text.
 - **Zero network calls in the core.** Analysis is entirely local: no
   source, flag keys, configuration, findings, or repository metadata leave the
   machine. `test/architecture/network-guard.test.ts` fails the build if a network
@@ -118,12 +123,11 @@ See [`docs/testing.md`](docs/testing.md) for the layers and how to debug them.
 
 1. Implement the smallest coherent outcome. One slice, not two.
 2. Add or update proportionate automated tests.
-3. Run the checks above and record the resulting counts.
-4. Update the roadmap's **Current state** table, plus **Decisions already made** if
-   you settled an architectural question.
+3. Run the checks above.
+4. Update the roadmap: remove the landed slice from Next, record decisions, known
+   debt and findings.
 5. Give concise manual verification steps and expected results.
 6. Commit the slice with one Conventional Commit message, and push.
 
-Do not mark planned, partially implemented, or unverified work complete. If a slice
-is abandoned mid-way, record what exists, what does not, and what the next agent
-needs to know.
+If a slice is abandoned mid-way, leave it in **Next** and record what the next agent
+needs to know as known debt or a finding, not as a status note.
