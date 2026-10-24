@@ -12,8 +12,8 @@ This repository owns its build, tests, versioning, release, and roadmap.
 2. Read [`ROADMAP.md`](ROADMAP.md): the next slices, the decisions already made,
    and the known debt. It is a plan, not a status board; work state lives in Odin
    and git.
-3. Read [`docs/design.md`](docs/design.md) — product decision, architecture,
-   monetization, and the validation gate.
+3. Read [`docs/design.md`](docs/design.md) — the case, architecture, evidence
+   and confidence rules, governance, and privacy.
 4. Read [`docs/testing.md`](docs/testing.md) before changing tests or tooling.
 5. Run `git status` and **preserve working-tree changes that are not yours**.
 6. Run `npm run check` to establish a green baseline *before* editing.
@@ -89,12 +89,11 @@ authoritative because lint can be silenced with an inline disable comment.
 
 - **No tiers, licensing, or paid features.** Decided by the user on 2026-09-22:
   Flag Marshal is one free, standalone tool, and every capability runs on every
-  installation. The entitlement seam was removed. Do not reintroduce a gate, a
+  installation. Do not introduce a gate, a
   licence check, an activation flow, a payment processor, or billing
   configuration without an explicit user decision.
-- **No editor frontends.** Decided by the user on 2026-10-07: the VS Code
-  extension and the editor server (`serve --stdio`) were removed, and the IntelliJ
-  plugin will not be built. Do not add an editor integration, language server, or
+- **No editor frontends.** Decided by the user on 2026-10-07: no VS Code
+  extension, editor server, or IntelliJ plugin. Do not add an editor integration, language server, or
   editor API import without an explicit user decision.
 - **CLI and CI are the focus** (user, 2026-10-07). Making `flag-marshal` work well
   in pipelines (output files, CI annotations, CI-aware defaults, documented

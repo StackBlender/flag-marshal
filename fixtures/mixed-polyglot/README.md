@@ -8,4 +8,4 @@ One flag key evaluated from two languages in two modules.
 
 This is the fixture that proves the index is keyed by flag, not by file or
 language: a single `FlagRecord` must carry both references. It is also the case
-that makes `module-spread` evidence meaningful in Milestone 5.
+that makes `module-spread` evidence meaningful.

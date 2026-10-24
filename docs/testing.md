@@ -59,8 +59,6 @@ npx vitest run test/architecture      # expect: 'core imports no network module'
 rm -rf src/core/detect
 ```
 
-All four guards were verified failing on real violations at Milestone 0.
-
 ## Contract tests
 
 `schema/v1/scan-report.schema.json` is the source of truth for the wire contract.
@@ -95,9 +93,8 @@ across two languages.
 #    -> 'has an entry for every finding id in the schema' fails
 ```
 
-All three were verified failing on real drift at Milestone 1, alongside the four
-boundary guards from Milestone 0. If you change any of these mechanisms, re-run
-the probes rather than trusting that they still work.
+If you change any of these mechanisms, re-run the probes rather than trusting that
+they still work.
 
 ## Detection tests
 
@@ -121,11 +118,8 @@ the probes rather than trusting that they still work.
 | `compare.test.ts` | `--changed-since` identities: flags by key, findings by rule and flag, unresolved references by file, provider and expression, all counted as multisets |
 
 `golden-conformance.test.ts` is the important one: it is where the goldens stop
-being a specification and become a regression test. It covers only the TypeScript
-fixtures, because Java, Kotlin, and configuration sources are not wired until
-Milestones 4 and 6. `mixed-polyglot` asserts the gap explicitly — the golden
-carries two languages, detection currently supplies one — rather than weakening
-the golden to match today's code.
+being a specification and become a regression test. `mixed-polyglot` must merge
+one key across Java and TypeScript into one record.
 
 ### Verifying the never-guess guard still bites
 
@@ -139,9 +133,8 @@ Two probes confirm the tests enforce it:
 #    -> 'refuses to resolve a template literal with interpolation' fails
 ```
 
-Both were verified at Milestone 2. A probe that changes nothing proves nothing —
-the first attempt at probe A guessed from a quoted substring, which the fixtures
-do not contain, so it passed and had to be rewritten.
+A probe that changes nothing proves nothing: make sure the probed input actually
+reaches the changed code.
 
 ### Verifying the rule guards still bite
 
@@ -212,22 +205,14 @@ suite compiles every query against every grammar so breakage fails CI instead.
 #    -> 1 test fails; every LaunchDarkly flag gains a phantom staleness signal
 ```
 
-Probe Y also originally **passed**, because a second guard rejected the input
-before the rule under test ran — the test was protected by defence in depth rather
-than by the thing it claimed to check. Rewritten to isolate the rule, it fails
-correctly.
+Assume a passing probe is broken until you have seen it fail. Probes assert that
+they applied (a reformatted block can make the replacement silently miss), and a
+probe must isolate the rule under test: a second guard rejecting the input first
+makes it pass for the wrong reason.
 
-Probe F also originally **no-opped**: Prettier had reformatted the block, so the
-replacement string never matched and the suite passed for the wrong reason. Probes
-now assert that they applied before drawing any conclusion. Two probes in this
-project have now failed to prove anything on the first attempt — assume a passing
-probe is broken until you have seen it fail.
-
-Probe D originally **passed**, which exposed a gap in the tests rather than
-safety in the code: every non-flag property in the fixtures happened to have a
-non-boolean value, so the boolean check alone was carrying them. Cases using real
-boolean Spring settings (`spring.jpa.show-sql=true`) were added, and the probe
-then failed as it should.
+Probe D depends on fixtures with real boolean Spring settings that are not flags
+(`spring.jpa.show-sql=true`); without them the boolean check alone carries the
+tests.
 
 ## Frontend tests
 
@@ -252,10 +237,9 @@ links, 50 concurrent reads including a large multi-byte file through one
 `git cat-file --batch`, refused refs, and uncommitted edits counting as the change.
 
 The cheapest end-to-end check is comparing a repository with itself: `scan
---changed-since HEAD` on a clean checkout must report no changes. On 2026-10-07
-togglz, unleash and spring-boot from the corpus all did, and the comparison cost
-about one extra scan (togglz 2.6s -> 4.9s, unleash 5.5s -> 10.0s) with no rise in
-peak memory.
+--changed-since HEAD` on a clean checkout must report no changes. The comparison
+costs about one extra scan (togglz 2.6s -> 4.9s, unleash 5.5s -> 10.0s) with no
+rise in peak memory.
 
 ```sh
 # S. Compare against the ref's tip instead of the merge base in node-git-snapshot.ts
@@ -288,10 +272,8 @@ a real `git apply` to check the result equals the previewed files.
 The final "result must parse cleanly" check in `rewriteFile` is a backstop no
 known input reaches, so no test fails when it is removed. Keep it.
 
-On 2026-10-07 every flag in js-sdk-contrib, node-server-sdk and unleash-node-sdk
-was previewed both ways with the coverage refusal switched off: 122 previews in
-5 s, all refused as `unsupported-shape`. These are SDKs and their tests, not
-applications, so they show robustness, not that the shape is common.
+A corpus sweep of the SDK repositories refuses every preview as `unsupported-shape`
+([finding](findings/2026-10-07-refactor-preview.md)): that shows robustness, not reach.
 
 ### CI formats
 
@@ -310,8 +292,7 @@ shallow clone reports no history, explains a failed comparison, and warns.
 
 `test/docs/ci-recipes.test.ts` keeps `docs/ci.md` copyable: every YAML block must
 parse and every `flag-marshal` command in it must be accepted by the CLI as it is
-now. Probed 2026-10-07: an unknown format in a recipe, and a mis-indented YAML key,
-each fail it.
+now. An unknown format in a recipe, and a mis-indented YAML key, each fail it.
 
 ### Every capability, no configuration
 
@@ -463,21 +444,10 @@ languages remain unread and correctly cap confidence.
 baseline ratchet. It deliberately does **not** enforce drift findings; failing a
 build on an inference is how a tool loses a team's trust.
 
-Git evidence costs one `git log -S` per flag and does not scale to deep histories;
-see the performance budget in
-[`docs/findings/2026-09-10-git-evidence-and-scoring.md`](findings/2026-09-10-git-evidence-and-scoring.md). `--no-git` skips it
+Git evidence costs one `git log -S` per flag, eight in parallel; it is unmeasured on very large
+histories ([deep history](findings/2026-09-22-git-evidence-deep-history.md)). `--no-git` skips it
 and makes output fully deterministic, which is what goldens and CI diffing rely
 on.
-
-`check` still reports itself as unimplemented and exits non-zero.
-
-The goldens for `java-spring-conditional`, `kotlin-unleash`, and the configuration
-half of `mixed-polyglot` still describe output nothing produces. They remain the
-acceptance specification for Milestones 4 and 6.
-
-No third-party repository containing real LaunchDarkly usage has been scanned. The
-inventory is proven against fixtures and against repositories that contain no flags
-at all. Collecting that evidence is part of the section 8 validation gate.
 
 ## CI
 
@@ -486,5 +456,4 @@ installed-tarball smoke test, and a production dependency audit on every push an
 pull request.
 
 CI checks out with `fetch-depth: 0`. Git history is analysis input — flag age and
-last-touched dates come from `git log` — so a shallow clone would silently weaken
-that evidence once Milestone 5 lands.
+last-touched dates come from `git log` — and a shallow clone counts as no history.

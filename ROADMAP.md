@@ -13,10 +13,10 @@ A local-first command-line and CI tool that finds stale, dead, duplicated and un
 Product (owner):
 
 - 2026-09-09, owner: build Flag Marshal as designed in [docs/design.md](docs/design.md): TypeScript on Node, distributed on npm and run with `npx`; CLI `flag-marshal`, short alias `marshal`.
-- 2026-09-22, owner: one free standalone tool. Every capability on every installation; no tiers, licence keys or accounts. See [the superseded tier design](docs/findings/2026-09-10-tiers-and-licensing.md).
+- 2026-09-22, owner: one free standalone tool. Every capability on every installation; no tiers, licence keys or accounts. Never gate detection by provider.
 - 2026-09-22, owner: MIT licence from 0.1.3; 0.1.0 to 0.1.2 stay under the proprietary terms they shipped with.
-- 2026-09-22, owner: the source lives in the public `StackBlender/flag-marshal` repository with the same versioning; the private repository and `flag-marshal-support` are retired. See [the finding](docs/findings/2026-09-22-open-source-fresh-repository.md).
-- 2026-10-07, owner: "scrap the extension completely and only focus on the cli / ci tool support". No editor frontends; CI support is in scope; marketplace publishing, accounts and hosted checks stay the owner's. See [the finding](docs/findings/2026-10-07-editor-frontends-removed.md).
+- 2026-09-22, owner: the source lives in the public `StackBlender/flag-marshal` repository; the private repository and `flag-marshal-support` are retired, and the link guards (`test/package/npm-artifact.test.ts`, `scripts/test-npm-package.mjs`) reject them. No customer names or customer flag keys in this public repository.
+- 2026-10-07, owner: "scrap the extension completely and only focus on the cli / ci tool support". No editor frontends (VS Code, `serve --stdio`, IntelliJ, LSP); CI support is in scope; marketplace publishing, accounts and hosted checks stay the owner's.
 - 2026-10-07, owner: the public repository may describe unreleased behaviour before it reaches npm.
 - 2026-10-07, owner: a refactor preview is gated on the rewrite being exact, not on `HIGH` staleness confidence. The user picks the value; the preview never claims the flag is safe to remove; staleness confidence is shown beside it.
 - 2026-10-14, owner (approved in review, FLAG-MARSHAL-586): read a local Unleash export as provider state (`--unleash-export`, `providerState` in `.flagmarshal.yml`). Its entries are leads: no findings, never "safe to delete", no change to what `check` enforces. See [docs/cli.md](docs/cli.md).
@@ -28,7 +28,7 @@ Architecture (stream, under the approved design):
 - 2026-09-10: zero network calls in core, enforced by a guard test. Flag keys never reach logs, errors or telemetry.
 - 2026-09-10: all human-facing strings come from `catalog/messages.json` through `src/present/`; no frontend reads the catalog directly.
 - 2026-09-10: `schema/v1/scan-report.schema.json` (one file, `$defs`) is the source of truth; generated types are committed, and staleness is a test failure.
-- 2026-09-10: contract policy: 1.0 was mutable until first release; added fields are always optional; a breaking change bumps the major.
+- 2026-09-10: contract policy: added fields are always optional; a breaking change bumps the major.
 - 2026-09-10: positions are 0-based line and UTF-16 column, as tree-sitter emits them; frontends convert at their edge (SARIF is 1-based).
 - 2026-09-10: grammars are WebAssembly through `web-tree-sitter`, never native bindings; `@vscode/tree-sitter-wasm`, plus `@tree-sitter-grammars/tree-sitter-kotlin`.
 - 2026-09-10: the core touches no workspace directly: frontends supply `FileSystem`, `GitHistory` and baseline I/O. The parser pool reads only bundled grammars.
@@ -37,7 +37,7 @@ Architecture (stream, under the approved design):
 - 2026-09-10: a corpus of two public repositories per provider plus two that must stay silent, not checked in; only `corpus-baseline.json` is committed. See [the finding](docs/findings/2026-09-10-corpus-regression-suite.md).
 - 2026-09-10: anything asking "what does this code declare" is a tree-sitter query, never a regex. See [round 6](docs/findings/2026-09-10-detector-round-6.md).
 - 2026-09-10: a provider is data (id, method names, languages); broken queries are skipped at runtime and every query is compiled against every grammar in CI.
-- 2026-09-10: a provider call needs the provider's import **and** a receiver bound to it (declared type, typed parameter, factory call or constructor); a receiver containing a call is rejected. Supersedes method-name matching ([round 1](docs/findings/2026-09-10-detector-round-1.md)).
+- 2026-09-10: a provider call needs the provider's import **and** a receiver bound to it (declared type, typed parameter, factory call or constructor); a receiver containing a call is rejected, never method names alone ([round 1](docs/findings/2026-09-10-detector-round-1.md)).
 - 2026-09-10: never guess. Computed keys are reported unresolved; unverified calls are omitted entirely.
 - 2026-09-10: constant keys are read from the parse tree, only for immutable bindings (`final`/`const`/`val`, or a local never reassigned in the file); a Java field must say `final`; a pass that cannot see the writes calls nothing constant.
 - 2026-09-10: Togglz keys are enum constants and `NamedFeature("literal")`; `togglz.features.<K>.enabled` normalizes to `<K>`. Enums need real `org.togglz` evidence, are found by a first pass, and are identified by package-qualified name; ambiguity means unresolved.
@@ -71,7 +71,6 @@ Architecture (stream, under the approved design):
 
 ## Known debt
 
-- The work merged on 2026-10-14 is unreleased and missing from `CHANGELOG.md`: npm users do not have it (Next 1).
 - The GitLab recipe and the SARIF upload have never run in a real pipeline: the Code Quality widget is taken from GitLab's documentation (Next 2).
 - The website's Flag Marshal docs are hand copies: they drift from [docs/cli.md](docs/cli.md) (Next 3).
 - `HIGH` confidence is unreachable for remote SDK flags: at most two local signals exist for LaunchDarkly, OpenFeature and Unleash, so "safe to delete" can never be shown; the Unleash export adds leads, not signals.

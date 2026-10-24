@@ -30,8 +30,8 @@ drifting from its specification.
 
 Goldens are built by `npm run build:goldens`, which computes exact line and column
 positions from the fixture sources. The expectations themselves are hand-declared
-in `scripts/build-goldens.mjs`: they are the specification, written before the
-analyzer exists.
+in `scripts/build-goldens.mjs`: they are the specification, never generated from
+analyzer output.
 
 Conventions:
 
@@ -40,9 +40,8 @@ Conventions:
   resolved.
 - `root` is the fixture name, never an absolute path, so goldens are identical on
   every machine and CI runner.
-- `findings` is empty at Milestone 1. Rule output is added by the milestone that
-  implements each rule — M2 for `flag.unresolved-key`, M4 for the configuration
-  rules, M5 for `flag.stale`. The inventory in `flags` is the Milestone 1 contract.
+- Goldens pin detection and the findings that need no git history; scoring and
+  age-based findings are asserted by unit tests.
 
 After changing a fixture source, run `npm run build:goldens`. A committed golden
 that no longer matches its source fails `test/contract/generated.test.ts`.
