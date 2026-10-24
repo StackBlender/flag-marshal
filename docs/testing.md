@@ -464,7 +464,8 @@ baseline ratchet. It deliberately does **not** enforce drift findings; failing a
 build on an inference is how a tool loses a team's trust.
 
 Git evidence costs one `git log -S` per flag and does not scale to deep histories;
-see the performance budget in `ROADMAP.md` under Milestone 5. `--no-git` skips it
+see the performance budget in
+[`docs/findings/2026-09-10-git-evidence-and-scoring.md`](findings/2026-09-10-git-evidence-and-scoring.md). `--no-git` skips it
 and makes output fully deterministic, which is what goldens and CI diffing rely
 on.
 

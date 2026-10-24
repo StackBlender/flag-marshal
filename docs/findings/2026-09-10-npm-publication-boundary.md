@@ -1,0 +1,8 @@
+# The npm publication boundary (2026-09-10)
+
+- **Public, scoped, then MIT.** A private npm package costs money per seat and a registry needing credentials breaks `npx`; the package is `@stackblender/flag-marshal` with `publishConfig.access: public` (a scoped package defaults to restricted). 0.1.0 to 0.1.2 shipped under proprietary terms; MIT from 0.1.3.
+- **Source comments explained the pricing strategy in plain English** ("a LaunchDarkly shop has a vendor bill, a Togglz shop does not") and would have shipped verbatim. Comments are stripped and the build minifies per file. It is **deliberately not a bundle**: `catalog/messages.json` and the `.wasm` grammars resolve through relative paths and `createRequire`. Minification is not protection; obfuscation was rejected (breaks stack traces, stops nobody motivated).
+- **Source maps were broken** (they referenced unpublished `../../src`) and are no longer emitted.
+- The first tarball: **33.5 kB packed, 99 kB unpacked, 83 files**.
+- `CORE_VERSION` was `0.0.0` while the package was `0.1.0`, so reports embedded a version the package did not have. `test/contract/version.test.ts` fails if they drift.
+- **0.1.0 exposed the internal README**, development scripts and dependencies, roadmap links and unshipped tier claims on npm (no credentials or TypeScript source). Since 0.1.1 the repository manifest is `private: true` and `scripts/assemble-npm-package.mjs` builds an allowlisted artifact under `artifacts/npm/package` with a customer README; `test/package/npm-artifact.test.ts` and `npm run test:npm-package` guard it. A published version is immutable on npm, so a correction needs a new version.
