@@ -35,13 +35,12 @@ Do not duplicate portfolio-level documents into this repository.
 Read-only Git commands are allowed for inspection at any time: `git status`,
 `git diff`, `git log`, `git show`.
 
-Never run a Git command that changes repository or working-tree state. The user
-exclusively owns staging, commits, pushes, pulls, merges, rebases, branch and tag
-changes, resets, checkouts, restores, cleaning, stashing, and publishing. Never run
-`git add -A`, `git add .`, or `git commit -a`.
+Agents commit and push their own slices without asking (owner, 2026-10-24):
+- Commit as the repo-local identity `StackBlender <noreply@stackblender.invalid>`; no `Co-Authored-By` trailers or other AI attribution.
+- Stage explicit paths only: never `git add -A`, `git add .` or `git commit -a`. Never stage, revert or commit changes that are not yours.
+- Never rewrite published history (no force-push, no rebasing pushed commits) and never delete branches or tags without the owner.
 
-At the end of a slice, suggest one concise Conventional Commit message. Do not
-create the commit.
+Use one concise Conventional Commit message per slice. Publishing a release (npm, marketplaces) stays with the owner.
 
 **Author identity:** this repository commits as `StackBlender
 <noreply@stackblender.invalid>`, matching the other StackBlender repositories. It is
@@ -123,7 +122,7 @@ See [`docs/testing.md`](docs/testing.md) for the layers and how to debug them.
 4. Update the roadmap's **Current state** table, plus **Decisions already made** if
    you settled an architectural question.
 5. Give concise manual verification steps and expected results.
-6. Suggest one Conventional Commit message. Do not create the commit.
+6. Commit the slice with one Conventional Commit message, and push.
 
 Do not mark planned, partially implemented, or unverified work complete. If a slice
 is abandoned mid-way, record what exists, what does not, and what the next agent
