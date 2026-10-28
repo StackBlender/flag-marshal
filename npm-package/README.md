@@ -1,5 +1,13 @@
 # Flag Marshal
 
+> **Deprecated — 2026-10-28.** Flag Marshal is no longer maintained. No further
+> releases, fixes, or support are planned. Existing packages and source remain
+> available for existing users and forks.
+
+To stop using it, remove its CI steps and uninstall `@stackblender/flag-marshal`.
+For a global installation, run `npm uninstall --global @stackblender/flag-marshal`.
+The usage reference below is retained for existing installations.
+
 Find feature-flag debt without uploading your source code.
 
 Flag Marshal inventories feature flags in a local repository, reports stale or

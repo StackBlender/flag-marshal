@@ -1,5 +1,9 @@
 # Security policy
 
+Flag Marshal was deprecated on 2026-10-28. No versions are supported and no further
+security fixes are planned. The private reporting channel below is retained for
+confidential disclosure; no response or remediation is promised.
+
 Do not report vulnerabilities in a public issue, discussion, pull request, or
 reproduction repository.
 

@@ -1,5 +1,17 @@
 # Flag Marshal
 
+> **Deprecated — 2026-10-28.** Flag Marshal is no longer maintained. No further
+> releases, fixes, or support are planned. Version 0.2.0 is the final published
+> version; the prepared 0.3.0 release is cancelled. Source and documentation remain
+> available for existing users and forks.
+
+To stop using Flag Marshal, remove its CI steps and uninstall
+`@stackblender/flag-marshal` (`npm uninstall --global @stackblender/flag-marshal`
+for a global installation). Remove `.flagmarshal.yml` and
+`.flagmarshal-baseline.json` if nothing else uses them. Keep any feature-flag
+configuration your application itself needs. The documentation below describes
+the retained implementation, including changes that never reached npm.
+
 Local-first feature-flag technical-debt analysis and governance.
 
 Feature flags get created constantly and removed almost never. Flag Marshal finds the

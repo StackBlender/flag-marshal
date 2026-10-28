@@ -1,5 +1,10 @@
 # Flag Marshal Agent Guide
 
+**Retired by the owner on 2026-10-28.** Flag Marshal is deprecated and no longer
+maintained. No feature work, maintenance, or releases are planned; 0.3.0 was
+prepared but will not be published. Do not resume the historical roadmap without
+an explicit owner decision. The rules below apply to any owner-authorized changes.
+
 Flag Marshal is a local-first feature-flag technical-debt analyzer. It finds stale,
 dead, duplicated, and undocumented feature flags, reports the evidence behind each
 finding, and enforces flag policy in CI.

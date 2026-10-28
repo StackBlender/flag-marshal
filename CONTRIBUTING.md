@@ -1,13 +1,12 @@
 # Contributing
 
-Flag Marshal is MIT-licensed, and contributions are welcome: bug fixes, detection
-improvements, new providers or languages, documentation, and minimal reproduction
-cases.
+Flag Marshal was deprecated on 2026-10-28 and is no longer maintained. New
+contributions are not being accepted. The MIT-licensed source remains available
+for forks; the guidance below is retained for anyone working on their own fork.
 
 ## Before you start
 
-For anything beyond a small fix, open an issue first so the approach can be agreed
-before you spend time on it. Detection changes in particular need a reproduction:
+Detection changes in particular need a reproduction:
 the product's value rests on not reporting ordinary code as flag debt.
 
 ## Development

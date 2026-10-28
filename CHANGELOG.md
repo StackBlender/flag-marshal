@@ -1,6 +1,12 @@
 # Changelog
 
-## 0.3.0 — Unreleased
+## Deprecated — 2026-10-28
+
+Flag Marshal is no longer maintained. No further releases, fixes, or support are
+planned. Version 0.2.0 is the final published version. Source and existing packages
+remain available; the prepared 0.3.0 release is cancelled.
+
+## 0.3.0 — Unreleased, cancelled
 
 - **Maximum flag age:** `policy.maxAgeDays` now reports `flag.too-old` when a
   temporary flag exceeds the limit, enforced by `check` with the baseline ratchet.

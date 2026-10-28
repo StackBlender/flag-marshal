@@ -1,16 +1,21 @@
-# Flag Marshal roadmap: v1
+# Flag Marshal roadmap: retired
+
+Deprecated by the owner on 2026-10-28. No further releases, fixes, or support are
+planned. Version 0.2.0 is the final published version; the prepared 0.3.0 release
+is cancelled. The decisions, limitations, and ideas below are historical context
+for existing users and forks, not authorized future work.
 
 A local-first command-line and CI tool that finds stale, dead, duplicated and undocumented feature flags, shows the evidence behind each finding, and enforces flag policy in CI. README: [README.md](README.md). Rules: [AGENTS.md](AGENTS.md). Design: [docs/design.md](docs/design.md). CLI: [docs/cli.md](docs/cli.md). CI: [docs/ci.md](docs/ci.md). Proposals: [docs/roadmap/proposals/](docs/roadmap/proposals/README.md). Findings: [docs/findings/](docs/findings/README.md).
 
 ## Next
 
-1. Run the GitLab recipe in [docs/ci.md](docs/ci.md) in a real merge-request pipeline, and the SARIF upload on GitHub. Needs a hosted GitLab project from the owner, who deferred it (2026-10-14). Done when both render as `docs/ci.md` says, with evidence beside [docs/evidence/ci-github-2026-10-14/](docs/evidence/ci-github-2026-10-14/README.md), or the recipe is corrected.
-2. Make this repository the source of the website's Flag Marshal docs: move them to `docs/site/` and list them in the website's `docs-sources.json`. Done when the website builds its Flag Marshal pages from this repository and its hand copies are gone.
+None. Hosted CI verification and website documentation consolidation are cancelled.
 
 ## Decisions
 
 Product (owner):
 
+- 2026-10-28, owner: "lets just deprecate the tool". End maintenance and cancel the prepared 0.3.0 release and remaining roadmap. Retain published packages and source for existing users; do not unpublish packages.
 - 2026-09-09, owner: build Flag Marshal as designed in [docs/design.md](docs/design.md): TypeScript on Node, distributed on npm and run with `npx`; CLI `flag-marshal`, short alias `marshal`.
 - 2026-09-22, owner: one free standalone tool. Every capability on every installation; no tiers, licence keys or accounts. Never gate detection by provider.
 - 2026-09-22, owner: MIT licence from 0.1.3; 0.1.0 to 0.1.2 stay under the proprietary terms they shipped with.
@@ -71,8 +76,8 @@ Architecture (stream, under the approved design):
 
 ## Known debt
 
-- The GitLab recipe and the SARIF upload have never run in a real pipeline: the Code Quality widget is taken from GitLab's documentation (Next 2).
-- The website's Flag Marshal docs are hand copies: they drift from [docs/cli.md](docs/cli.md) (Next 3).
+- The GitLab recipe and the SARIF upload have never run in a real pipeline: the Code Quality widget is taken from GitLab's documentation. Further verification is cancelled.
+- The website's Flag Marshal docs are hand copies: they drift from [docs/cli.md](docs/cli.md). Consolidation is cancelled; the website owner owns its deprecation notice.
 - `HIGH` confidence is unreachable for remote SDK flags: at most two local signals exist for LaunchDarkly, OpenFeature and Unleash, so "safe to delete" can never be shown; the Unleash export adds leads, not signals.
 - No LaunchDarkly export is read: Unleash is the only provider state source.
 - The unresolved-key cap is repository-wide: one computed key anywhere caps every flag's confidence (declared helper pass-throughs excepted).

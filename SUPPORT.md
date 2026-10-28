@@ -1,9 +1,16 @@
 # Support
 
+Flag Marshal was deprecated on 2026-10-28 and is no longer maintained. No further
+releases, fixes, or support are planned. New feature requests and bug reports are
+not being accepted. Existing documentation and source remain available for users
+and forks.
+
 Start with the [CLI reference](docs/cli.md) and the [changelog](CHANGELOG.md).
 Please post only sanitized, intentionally public material in this repository.
 
-## Where to ask
+## Historical reporting channels
+
+These links are retained for reference; they do not imply ongoing support.
 
 | Need | Channel |
 | --- | --- |
