@@ -4,9 +4,8 @@ A local-first command-line and CI tool that finds stale, dead, duplicated and un
 
 ## Next
 
-1. Prepare the release of the work merged since 0.2.0: the maximum-age findings `flag.too-old` and `flag.age-unknown`, Unleash export reconciliation, settings problems printed by `scan`, the product homepage in the npm manifest, and the CI recipe's job-summary fix. Done when `CHANGELOG.md` lists them under the new version, `package.json`, `CORE_VERSION` and the goldens agree, and `npm run check`, `npm run build` and `npm run test:npm-package` pass. Publishing stays the owner's.
-2. Run the GitLab recipe in [docs/ci.md](docs/ci.md) in a real merge-request pipeline, and the SARIF upload on GitHub. Needs a hosted GitLab project from the owner, who deferred it (2026-10-14). Done when both render as `docs/ci.md` says, with evidence beside [docs/evidence/ci-github-2026-10-14/](docs/evidence/ci-github-2026-10-14/README.md), or the recipe is corrected.
-3. Make this repository the source of the website's Flag Marshal docs: move them to `docs/site/` and list them in the website's `docs-sources.json`. Done when the website builds its Flag Marshal pages from this repository and its hand copies are gone.
+1. Run the GitLab recipe in [docs/ci.md](docs/ci.md) in a real merge-request pipeline, and the SARIF upload on GitHub. Needs a hosted GitLab project from the owner, who deferred it (2026-10-14). Done when both render as `docs/ci.md` says, with evidence beside [docs/evidence/ci-github-2026-10-14/](docs/evidence/ci-github-2026-10-14/README.md), or the recipe is corrected.
+2. Make this repository the source of the website's Flag Marshal docs: move them to `docs/site/` and list them in the website's `docs-sources.json`. Done when the website builds its Flag Marshal pages from this repository and its hand copies are gone.
 
 ## Decisions
 
@@ -24,6 +23,7 @@ Product (owner):
 
 Architecture (stream, under the approved design):
 
+- 2026-10-28: additive features since 0.2.0 belong to 0.3.0: maximum-age policy, local Unleash export reconciliation, settings diagnostics, npm homepage and CI summary fixes. Keep the changelog entry unreleased until the owner publishes; release preparation does not authorize publication.
 - 2026-09-10: `core/` imports no CLI, editor, platform or network API and emits structured issues only; frontends import `core/api` only. Enforced by ESLint and, authoritatively, `test/architecture/`.
 - 2026-09-10: zero network calls in core, enforced by a guard test. Flag keys never reach logs, errors or telemetry.
 - 2026-09-10: all human-facing strings come from `catalog/messages.json` through `src/present/`; no frontend reads the catalog directly.

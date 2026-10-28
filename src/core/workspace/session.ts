@@ -99,7 +99,7 @@ interface Analysis {
  * claiming a version the package does not have makes every archived report
  * untraceable.
  */
-export const CORE_VERSION = '0.2.0';
+export const CORE_VERSION = '0.3.0';
 
 /** Contract version this build emits. Consumers reject majors they do not know. */
 export const SCHEMA_VERSION = '1.0';

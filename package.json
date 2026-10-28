@@ -1,6 +1,6 @@
 {
   "name": "@stackblender/flag-marshal",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Local-first feature-flag technical-debt analysis and governance.",
   "private": true,
   "type": "module",

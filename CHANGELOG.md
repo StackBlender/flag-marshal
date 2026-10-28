@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.3.0 — Unreleased
+
+- **Maximum flag age:** `policy.maxAgeDays` now reports `flag.too-old` when a
+  temporary flag exceeds the limit, enforced by `check` with the baseline ratchet.
+  Without Git age evidence, `flag.age-unknown` explains that the age could not be
+  checked and does not fail CI. Allowlisted flags and operational switches are exempt.
+- **Local Unleash exports:** `scan --unleash-export <file>` or
+  `providerState.unleash` in `.flagmarshal.yml` reconciles code with an offline
+  JSON or YAML export. Reports include snapshot provenance, completeness, optional
+  environment state, and leads to investigate. These add no policy violations or
+  deletion verdicts; absence is reported only for exports declared complete.
+- **Settings diagnostics:** `scan` prints malformed or invalid `.flagmarshal.yml`
+  settings to stderr and continues with defaults for rejected settings. `check`
+  refuses invalid settings with exit code 1 rather than silently enforcing defaults.
+- The npm package homepage now points to the Flag Marshal product page.
+- The GitHub Actions recipe's job summary now runs after a policy failure.
+
 ## 0.2.0 — 2026-10-07
 
 - **New CI formats:** `--format=github` prints GitHub Actions annotations, and
